@@ -1,0 +1,23 @@
+{
+  "packageVersion": 1,
+  "minHostVersion": "0.1.3",
+  "developer": { "name": "MutCube 示例团队", "license": "MIT" },
+  "permissions": ["data.records", "speech.speak", "speech.recognize"],
+  "networkDomains": [],
+  "resources": {},
+  "template": {
+    "protocolVersion": 2,
+    "id": "example.speech",
+    "version": "1.0.1",
+    "name": "语音能力示例",
+    "entry": "templates/speech/index.html",
+    "capabilities": ["action.run"],
+    "collections": [
+      { "id": "notes", "policy": "IMMUTABLE_HISTORY", "schema": { "type": "object", "properties": { "text": { "type": "string" } }, "required": ["text"], "additionalProperties": false } }
+    ],
+    "actions": [
+      { "id": "note.list", "description": "读取已保存文字", "mode": "LIST", "channels": ["GUI"], "collection": "notes", "inputSchema": { "type": "object", "properties": { "beforeTime": { "type": "integer" }, "beforeKey": { "type": "string" } }, "required": [], "additionalProperties": false } },
+      { "id": "note.save", "description": "保存转写文字", "mode": "APPEND", "channels": ["GUI"], "collection": "notes", "inputSchema": { "type": "object", "properties": { "text": { "type": "string" } }, "required": ["text"], "additionalProperties": false } }
+    ]
+  }
+}

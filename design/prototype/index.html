@@ -1,0 +1,1924 @@
+<!doctype html>
+<html lang="en" data-visualize-standalone>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src 'unsafe-inline' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>MutCube 完整交互原型</title>
+<style>:root{color-scheme:light dark;background:light-dark(rgb(255 255 255), rgb(24 24 24))}html,body{margin:0}body{box-sizing:border-box;padding:1rem;background:inherit}iframe{display:block;width:100%;height:calc(100vh - 2rem);margin:0 auto;border:0}</style>
+</head>
+<body>
+<iframe sandbox="allow-scripts" referrerpolicy="no-referrer" title="MutCube 完整交互原型" src="prototype-v2.html" data-srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot; data-visualize-standalone&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+&lt;meta name=&quot;referrer&quot; content=&quot;no-referrer&quot;&gt;
+&lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;default-src &#x27;none&#x27;; script-src &#x27;unsafe-inline&#x27; &#x27;unsafe-eval&#x27; &#x27;wasm-unsafe-eval&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src &#x27;unsafe-inline&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;&quot;&gt;
+&lt;title&gt;Mutcube Mobile Concept&lt;/title&gt;
+&lt;style&gt;:root {
+  color-scheme: light dark;
+  background-color: var(
+    --background,
+    var(--color-background-primary, light-dark(rgb(255 255 255), rgb(24 24 24)))
+  ) !important;
+
+  /* Agent-facing contract; keep in sync with SKILL.md. */
+  --background: var(
+    --color-background-primary,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --card: color-mix(in oklab, var(--foreground) 5%, var(--background));
+  --card-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --popover: var(
+    --color-background-secondary,
+    light-dark(rgb(255 255 255), rgb(45 45 45))
+  );
+  --popover-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --primary: var(
+    --color-text-info,
+    light-dark(rgb(51 156 255), rgb(131 195 255))
+  );
+  --primary-foreground: var(
+    --color-text-inverse,
+    light-dark(rgb(255 255 255), rgb(13 13 13))
+  );
+  --secondary: var(
+    --color-background-secondary,
+    light-dark(rgb(255 255 255 / 96%), rgb(54 54 54 / 96%))
+  );
+  --secondary-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --muted: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --muted-foreground: var(
+    --color-text-secondary,
+    light-dark(rgb(26 28 31 / 49.4%), rgb(255 255 255 / 49.8%))
+  );
+  --accent: var(
+    --color-background-info,
+    light-dark(rgb(229 242 255), rgb(13 39 63))
+  );
+  --accent-foreground: var(
+    --color-text-info,
+    light-dark(rgb(51 156 255), rgb(131 195 255))
+  );
+  --destructive: var(
+    --color-text-warning,
+    light-dark(rgb(226 85 7), rgb(255 133 73))
+  );
+  --border: var(
+    --color-border-secondary,
+    light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%))
+  );
+  --input: var(
+    --color-border-primary,
+    light-dark(
+      rgb(26 28 31 / 11.8%),
+      color-mix(in oklab, rgb(0 0 0) 10%, transparent)
+    )
+  );
+  --ring: var(
+    --color-ring-primary,
+    light-dark(rgb(51 156 255), rgb(131 195 255 / 76%))
+  );
+  --font-size-base: var(--font-text-md-size, 14px);
+  --blue: light-dark(rgb(51 156 255), rgb(51 156 255));
+  --orange: light-dark(rgb(226 85 7), rgb(251 106 34));
+  --green: light-dark(rgb(0 162 64), rgb(64 201 119));
+  --red: light-dark(rgb(224 46 42), rgb(255 103 100));
+  --purple: light-dark(rgb(146 79 247), rgb(173 123 249));
+  --yellow: light-dark(rgb(255 195 0), rgb(255 210 64));
+  --viz-series-1: var(--primary);
+  --viz-series-2: light-dark(rgb(243 136 59), rgb(245 154 86));
+  --viz-series-3: light-dark(rgb(93 201 119), rgb(116 213 139));
+  --viz-series-4: light-dark(rgb(235 119 177), rgb(240 143 192));
+  --viz-series-5: light-dark(rgb(155 121 236), rgb(170 145 239));
+  --viz-series-6: light-dark(rgb(58 185 177), rgb(90 203 194));
+
+  /* Internal implementation variables; not part of the agent contract. */
+  --font-sans: -apple-system, system-ui, &quot;Segoe UI&quot;, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;,
+    monospace;
+  --font-size-normal: max(11px, var(--font-size-base));
+  --font-size-tooltip: calc(var(--font-size-base) - 1px);
+  --font-size-small: max(11px, calc(var(--font-size-base) - 2px));
+  --font-size-h1: calc(var(--font-size-normal) * 1.7142857143);
+  --font-size-h2: calc(var(--font-size-normal) * 1.4285714286);
+  --font-size-h3: calc(var(--font-size-normal) * 1.2857142857);
+  --font-weight-normal: 430;
+  --font-weight-medium: 500;
+  --icon-size: 16px;
+  --line-height-normal: calc(var(--font-size-normal) * 1.5);
+  --line-height-tooltip: calc(var(--font-size-tooltip) * 1.4285714286);
+  --line-height-small: calc(var(--font-size-small) + 4px);
+  --corner-shape: round;
+  --radius: var(--border-radius-lg, 10px);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-2xl: calc(var(--radius) * 1.6);
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 8%);
+  --checkmark-image: url(&quot;data:image/svg+xml,%3Csvg xmlns=&#x27;http://www.w3.org/2000/svg&#x27; viewBox=&#x27;0 0 17 17&#x27;%3E%3Cpath d=&#x27;M12.8961 3.64101C13.1297 3.41418 13.4984 3.37523 13.7779 3.56581C14.0571 3.75635 14.1554 4.11331 14.0299 4.41347L13.9615 4.53847L7.71151 13.7045C7.59411 13.8767 7.4063 13.9877 7.19881 14.0072C6.99136 14.0267 6.78564 13.9533 6.63826 13.806L2.88826 10.056L2.79842 9.9457C2.6192 9.67407 2.64927 9.30496 2.88826 9.06581C3.12738 8.82669 3.49647 8.79676 3.76815 8.97597L3.8785 9.06581L7.03084 12.2182L12.8053 3.74941L12.8961 3.64101Z&#x27;/%3E%3C/svg%3E&quot;);
+
+  /* Legacy aliases; not part of the current agent contract. */
+  --viz-bg: transparent;
+  --viz-panel: var(--card);
+  --viz-border: var(--border);
+  --viz-text: var(--foreground);
+  --viz-muted: var(--muted-foreground);
+  --viz-accent: var(--primary);
+  --viz-accent-text: var(--primary-foreground);
+  --viz-accent-bg: var(--accent);
+  --viz-font-size: var(--font-size-base);
+  --viz-warning: var(--destructive);
+}
+
+:root[data-theme=&quot;light&quot;] {
+  color-scheme: light;
+}
+
+:root[data-theme=&quot;dark&quot;] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html &gt; body {
+  /* Preserve MCP aliases for older inline renderers without creating :root cycles. */
+  --color-background-primary: var(
+    --background,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --color-text-primary: var(
+    --foreground,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --color-border-secondary: var(
+    --border,
+    light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%))
+  );
+
+  margin: 0;
+  padding: var(--visualize-paint-gutter, 0px);
+  color: var(--foreground);
+  background: transparent !important;
+  font-family: var(--font-sans) !important;
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+a {
+  color: color-mix(in srgb, var(--viz-accent) 80%, var(--viz-text) 20%);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium, 500);
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+
+a:is(:hover, :focus-visible) {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 0.5px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-block: 0;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h3,
+h4,
+h5,
+h6 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.3;
+}
+
+b,
+strong,
+th {
+  font-weight: var(--font-weight-medium);
+}
+
+code:not(pre code) {
+  display: inline;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  corner-shape: var(--corner-shape);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  word-break: break-word;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--foreground);
+  font: inherit;
+  text-align: start;
+}
+
+.table :is(th, td) {
+  padding-block: 10px;
+  padding-inline: 0 24px;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.table-responsive &gt; .table :is(th, td) {
+  overflow-wrap: break-word;
+}
+
+.table :is(th, td):last-child {
+  padding-inline-end: 0;
+}
+
+.table :is(caption, thead th) {
+  font-weight: 600;
+}
+
+.table thead th {
+  padding-block: 8px;
+  border-bottom-color: color-mix(in srgb, var(--foreground) 16%, transparent);
+}
+
+.table tbody tr:last-child :is(th, td) {
+  border-bottom: 0;
+}
+
+.table.table-sm :is(th, td) {
+  padding-block: 6px;
+}
+
+.table.table-sm :is(th, td):not(:last-child) {
+  padding-inline-end: 16px;
+}
+
+.table :is(.text-end, [align=&quot;right&quot;]) {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.table :is(.text-center, [align=&quot;center&quot;]) {
+  text-align: center;
+}
+
+.table .text-nowrap {
+  white-space: nowrap;
+}
+
+#widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  background: transparent !important;
+}
+
+.card {
+  min-width: 0;
+  padding: 12px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  border-radius: var(--radius-2xl);
+  corner-shape: var(--corner-shape);
+  color: var(--card-foreground);
+  background: var(--card);
+}
+
+#widget &gt; :not(.card, .progress) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: min(
+    20rem,
+    var(--tooltip-available-width, calc(100vw - 10px)),
+    calc(100vw - 10px)
+  );
+  max-height: min(
+    var(--tooltip-available-height, calc(100vh - 10px)),
+    calc(100vh - 10px)
+  );
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  corner-shape: var(--corner-shape);
+  color: var(--popover-foreground);
+  background: var(--popover);
+  box-shadow: none;
+  font-size: var(--font-size-tooltip);
+  line-height: var(--line-height-tooltip);
+  overflow-wrap: break-word;
+  white-space: normal;
+  pointer-events: none;
+  user-select: none;
+}
+
+.viz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(180px, 24%), 1fr));
+  gap: 10px;
+}
+
+.viz-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viz-stat-value {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+.viz-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+hr {
+  width: 100%;
+  height: 1px;
+  margin-block: 6px;
+  border: 0;
+  background: var(--border);
+}
+
+.nav {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+.progress {
+  display: flex;
+  height: 8px;
+  margin-block: calc((var(--line-height-normal, 1.5em) - 8px) / 2);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+}
+
+.progress-bar:only-child {
+  border-radius: var(--radius-full);
+}
+
+.progress-bar {
+  height: 100%;
+  flex-shrink: 0;
+  border: 0;
+  background: var(--viz-series-1);
+}
+
+.viz-badge {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  color: var(--accent-foreground);
+  background: var(--accent);
+  font-weight: var(--font-weight-medium);
+}
+
+small,
+.text-small,
+.viz-badge {
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.text-muted {
+  color: var(--muted-foreground);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.viz-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.viz-controls &gt; .form-label {
+  display: grid;
+  min-width: min(100%, 260px);
+  flex: 1 1 280px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 0;
+}
+
+.viz-controls &gt; .form-label &gt; :is(.form-control, .form-range, .form-select) {
+  grid-column: 1 / -1;
+}
+
+.btn,
+.nav-link,
+.form-check-input,
+.form-control,
+.form-range,
+.form-select {
+  font: inherit;
+}
+
+.btn,
+.nav-link {
+  appearance: button;
+  display: inline-flex;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0 8px;
+  -webkit-app-region: no-drag;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: var(--corner-shape);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: var(--cursor-interaction, pointer);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.btn:is(.btn-block, .viz-tile) {
+  inline-size: 100%;
+}
+
+.btn.viz-tile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+a.btn {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:not(:disabled):hover,
+.nav-link:not(:disabled):not([aria-disabled=&quot;true&quot;]):hover {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn-primary {
+  border-color: transparent;
+  color: var(--primary-foreground);
+  background: var(--foreground);
+  background-clip: padding-box;
+}
+
+.btn-primary .text-muted {
+  color: color-mix(in srgb, var(--primary-foreground) 50%, transparent);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 80%, transparent);
+  background-clip: padding-box;
+}
+
+.btn-ghost {
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.btn-ghost:not(:disabled):hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.nav-pills .nav-link {
+  min-width: 0;
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.nav-justified .nav-link {
+  flex: 1 1 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.nav-pills .nav-link.active {
+  color: var(--foreground);
+  background: var(--muted);
+}
+
+.btn:disabled,
+.nav-link:disabled,
+.nav-link[aria-disabled=&quot;true&quot;] {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+[data-lucide] {
+  stroke-width: 1.6;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--foreground);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: var(--corner-shape);
+  color: var(--foreground);
+  background: var(--secondary);
+}
+
+.form-control::placeholder {
+  color: var(--muted-foreground);
+}
+
+.form-control[type=&quot;file&quot;] {
+  padding: 0;
+  overflow: hidden;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control[type=&quot;file&quot;]::file-selector-button {
+  min-height: 26px;
+  margin-right: 8px;
+  padding: 0 8px;
+  border: 0;
+  border-right: 1px solid var(--input);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: inherit;
+  font: inherit;
+}
+
+.form-control[type=&quot;file&quot;]:not(:disabled):hover::file-selector-button {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-control-color[type=&quot;color&quot;] {
+  width: 40px;
+  height: 28px;
+  padding: 3px;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch {
+  border: 0;
+  border-radius: calc(var(--radius-lg) - 4px);
+  corner-shape: var(--corner-shape);
+}
+
+textarea.form-control {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.form-control:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.form-select {
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 0 32px 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: var(--corner-shape);
+  color: var(--foreground);
+  background-color: var(--secondary);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%),
+    linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 10px) 50%;
+  background-repeat: no-repeat;
+  background-size: 4px 4px;
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-select:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-select:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-check {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-check-input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 1px solid var(--input);
+  color: var(--primary-foreground);
+  background-color: transparent;
+  cursor: var(--cursor-interaction, default);
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;] {
+  border-color: var(--input);
+  border-radius: var(--radius-sm);
+  corner-shape: var(--corner-shape);
+  background-color: var(--secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input:not(:disabled):not(:checked):hover {
+  background-color: var(--card);
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;]:checked {
+  border-color: var(--primary);
+  background-color: var(--primary);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input[type=&quot;checkbox&quot;]:checked::before {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-foreground);
+  content: &quot;&quot;;
+  mask: var(--checkmark-image) center / 12px 12px no-repeat;
+}
+
+.form-check-input[type=&quot;radio&quot;] {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+}
+
+.form-check-input[type=&quot;radio&quot;]:checked {
+  border: 2px solid var(--primary);
+  background:
+    radial-gradient(circle, var(--primary-foreground) 0 2.5px, transparent 3px),
+    var(--primary);
+}
+
+.form-check:not(.form-switch) .form-check-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+}
+
+.form-switch .form-check-input:disabled,
+.form-switch .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-check-label {
+  color: var(--foreground);
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-switch .form-check-input {
+  position: relative;
+  width: 32px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  box-shadow: none;
+  transition: background-color 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid light-dark(var(--primary-foreground), var(--foreground));
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+  box-shadow: var(--shadow-sm);
+  content: &quot;&quot;;
+  transform: translate(2px, -50%);
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input:checked {
+  background: var(--primary);
+}
+
+.form-switch .form-check-input:checked::before {
+  transform: translate(14px, -50%);
+}
+
+.form-switch .form-check-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.form-range {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 28px;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: 0;
+  accent-color: var(--primary);
+  background: linear-gradient(
+      color-mix(in srgb, var(--foreground) 7%, transparent),
+      color-mix(in srgb, var(--foreground) 7%, transparent)
+    )
+    center / 100% 2px no-repeat;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-webkit-slider-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range::-moz-range-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-moz-range-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.btn:not(.btn-primary, .viz-tile):is(
+  [aria-pressed=&quot;true&quot;],
+  [aria-selected=&quot;true&quot;],
+  .is-selected
+) {
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+.btn.viz-tile:is([aria-pressed=&quot;true&quot;], [aria-selected=&quot;true&quot;], .is-selected) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.btn:focus-visible,
+.nav-link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+@media (pointer: coarse) {
+  .btn,
+  .nav-link,
+  .form-control,
+  .form-select {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Keep small-screen WebKit from zooming when a text field receives focus. */
+  .form-control,
+  .form-select {
+    font-size: max(16px, var(--font-size-normal));
+  }
+
+  .form-control[type=&quot;file&quot;]::file-selector-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .form-control-color[type=&quot;color&quot;] {
+    width: 44px;
+    height: 44px;
+  }
+
+  .form-control:is(
+    [type=&quot;date&quot;],
+    [type=&quot;datetime-local&quot;],
+    [type=&quot;month&quot;],
+    [type=&quot;time&quot;],
+    [type=&quot;week&quot;]
+  ) {
+    min-width: 0;
+    max-width: 100%;
+    padding-block: 8px;
+  }
+
+  .form-check {
+    min-height: 44px;
+    padding-inline: 15px;
+  }
+
+  .form-check-input {
+    position: relative;
+  }
+
+  .form-check-input::after {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    content: &quot;&quot;;
+    transform: translate(-50%, -50%);
+  }
+
+  .form-check-label {
+    display: inline-flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+  }
+
+  .form-range {
+    height: 44px;
+    touch-action: pan-y;
+  }
+
+  .form-range::-webkit-slider-runnable-track {
+    height: 44px;
+  }
+
+  .form-range::-moz-range-track {
+    height: 44px;
+  }
+
+  .form-range::-webkit-slider-thumb {
+    margin-top: 12px;
+  }
+}
+
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#widget &gt; svg {
+  width: 100%;
+}
+
+/* Model-authored chart rules can otherwise stretch icons after these styles load. */
+svg.lucide {
+  display: block;
+  width: var(--icon-size) !important;
+  height: var(--icon-size) !important;
+  flex: none;
+  margin: 0 !important;
+  stroke-width: 1.6;
+}
+
+.text-warning,
+.text-destructive {
+  color: var(--destructive);
+}
+
+html&gt;body{padding:0}&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;div id=&quot;mutcube-mock&quot; aria-label=&quot;MutCube 手机端交互原型&quot;&gt;
+  &lt;div class=&quot;mc-phone&quot;&gt;
+    &lt;header class=&quot;mc-topbar&quot;&gt;
+      &lt;button class=&quot;mc-icon-button&quot; id=&quot;mc-menu&quot; type=&quot;button&quot; aria-label=&quot;展开侧边栏&quot;&gt;
+        &lt;i data-lucide=&quot;menu&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;
+      &lt;/button&gt;
+      &lt;div class=&quot;mc-switch&quot; role=&quot;tablist&quot; aria-label=&quot;主要界面&quot;&gt;
+        &lt;button id=&quot;mc-chat-tab&quot; class=&quot;mc-switch-button is-active&quot; type=&quot;button&quot; role=&quot;tab&quot; aria-selected=&quot;true&quot;&gt;聊天&lt;/button&gt;
+        &lt;button id=&quot;mc-template-tab&quot; class=&quot;mc-switch-button&quot; type=&quot;button&quot; role=&quot;tab&quot; aria-selected=&quot;false&quot;&gt;模板&lt;/button&gt;
+      &lt;/div&gt;
+      &lt;button class=&quot;mc-icon-button&quot; id=&quot;mc-context-action&quot; type=&quot;button&quot; aria-label=&quot;预留功能位&quot; data-tooltip=&quot;预留功能位&quot;&gt;
+        &lt;i data-lucide=&quot;circle-dashed&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;
+      &lt;/button&gt;
+    &lt;/header&gt;
+
+    &lt;main class=&quot;mc-stage&quot;&gt;
+      &lt;section id=&quot;mc-messages&quot; class=&quot;mc-messages&quot; aria-label=&quot;当前对话&quot; hidden&gt;&lt;/section&gt;
+      &lt;section id=&quot;mc-chat-home&quot; class=&quot;mc-home&quot; aria-label=&quot;新对话首页&quot;&gt;
+        &lt;div class=&quot;mc-spacer&quot; aria-hidden=&quot;true&quot;&gt;&lt;/div&gt;
+      &lt;/section&gt;
+
+      &lt;section id=&quot;mc-template-home&quot; class=&quot;mc-template-home&quot; aria-label=&quot;模板首页&quot; hidden&gt;
+        &lt;div id=&quot;mc-template-search&quot; class=&quot;mc-template-search&quot; hidden&gt;
+          &lt;i data-lucide=&quot;search&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;
+          &lt;input id=&quot;mc-template-query&quot; type=&quot;search&quot; aria-label=&quot;搜索模板&quot; placeholder=&quot;搜索模板&quot; autocomplete=&quot;off&quot;&gt;
+          &lt;button id=&quot;mc-close-search&quot; type=&quot;button&quot; aria-label=&quot;关闭搜索&quot;&gt;&lt;i data-lucide=&quot;x&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;mc-template-heading&quot;&gt;
+          &lt;h2&gt;模板&lt;/h2&gt;
+          &lt;p&gt;让 AI 以更合适的服务界面出现&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;button class=&quot;mc-service&quot; type=&quot;button&quot;&gt;
+          &lt;span class=&quot;mc-service-icon&quot;&gt;&lt;i data-lucide=&quot;dumbbell&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;
+          &lt;span&gt;&lt;strong&gt;渐进训练&lt;/strong&gt;&lt;small&gt;今日计划、训练记录与日历&lt;/small&gt;&lt;/span&gt;
+          &lt;i data-lucide=&quot;chevron-right&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;
+        &lt;/button&gt;
+        &lt;button class=&quot;mc-service&quot; type=&quot;button&quot;&gt;
+          &lt;span class=&quot;mc-service-icon&quot;&gt;&lt;i data-lucide=&quot;book-open&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;
+          &lt;span&gt;&lt;strong&gt;深度学习&lt;/strong&gt;&lt;small&gt;阅读、课程与研究笔记&lt;/small&gt;&lt;/span&gt;
+          &lt;i data-lucide=&quot;chevron-right&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;
+        &lt;/button&gt;
+      &lt;/section&gt;
+    &lt;/main&gt;
+
+    &lt;section class=&quot;mc-composer-zone&quot; aria-label=&quot;消息输入区&quot;&gt;
+      &lt;div class=&quot;mc-composer&quot; id=&quot;mc-composer&quot;&gt;
+        &lt;textarea id=&quot;mc-message&quot; class=&quot;mc-message&quot; aria-label=&quot;消息&quot; rows=&quot;1&quot; placeholder=&quot;发消息…&quot;&gt;&lt;/textarea&gt;
+        &lt;div class=&quot;mc-composer-actions&quot;&gt;
+          &lt;button class=&quot;mc-strength&quot; type=&quot;button&quot; aria-label=&quot;选择模型强度&quot;&gt;
+            &lt;i data-lucide=&quot;gauge&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;标准&lt;/span&gt;&lt;i data-lucide=&quot;chevron-down&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;
+          &lt;/button&gt;
+          &lt;div class=&quot;mc-action-cluster&quot;&gt;
+            &lt;button class=&quot;mc-icon-button mc-camera&quot; type=&quot;button&quot; aria-label=&quot;相机&quot;&gt;&lt;i data-lucide=&quot;camera&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+            &lt;button class=&quot;mc-icon-button&quot; type=&quot;button&quot; aria-label=&quot;语音输入&quot;&gt;&lt;i data-lucide=&quot;mic&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+            &lt;button class=&quot;mc-icon-button mc-action-primary&quot; id=&quot;mc-add-send&quot; type=&quot;button&quot; aria-label=&quot;添加附件&quot;&gt;&lt;i data-lucide=&quot;plus&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/section&gt;
+
+    &lt;section id=&quot;mc-attach-sheet&quot; class=&quot;mc-attach-sheet&quot; aria-label=&quot;添加附件&quot; hidden&gt;
+      &lt;div class=&quot;mc-sheet-handle&quot; aria-hidden=&quot;true&quot;&gt;&lt;/div&gt;
+      &lt;div class=&quot;mc-attach-actions&quot;&gt;
+        &lt;button type=&quot;button&quot;&gt;&lt;span&gt;&lt;i data-lucide=&quot;camera&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;拍照&lt;/button&gt;
+        &lt;button type=&quot;button&quot;&gt;&lt;span&gt;&lt;i data-lucide=&quot;image&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;相册&lt;/button&gt;
+        &lt;button type=&quot;button&quot;&gt;&lt;span&gt;&lt;i data-lucide=&quot;folder&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/span&gt;本地文件&lt;/button&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;mc-gallery&quot; aria-label=&quot;最近照片占位&quot;&gt;
+        &lt;button type=&quot;button&quot; aria-label=&quot;选择最近照片 1&quot;&gt;&lt;/button&gt;
+        &lt;button type=&quot;button&quot; aria-label=&quot;选择最近照片 2&quot;&gt;&lt;/button&gt;
+        &lt;button type=&quot;button&quot; aria-label=&quot;选择最近照片 3&quot;&gt;&lt;/button&gt;
+        &lt;button type=&quot;button&quot; aria-label=&quot;选择最近照片 4&quot;&gt;&lt;/button&gt;
+        &lt;button type=&quot;button&quot; aria-label=&quot;选择最近照片 5&quot;&gt;&lt;/button&gt;
+        &lt;button type=&quot;button&quot; aria-label=&quot;选择最近照片 6&quot;&gt;&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/section&gt;
+
+    &lt;div id=&quot;mc-scrim&quot; class=&quot;mc-scrim&quot; hidden&gt;&lt;/div&gt;
+    &lt;aside id=&quot;mc-drawer&quot; class=&quot;mc-drawer&quot; aria-label=&quot;侧边栏&quot; hidden&gt;
+      &lt;div class=&quot;mc-brand-row&quot;&gt;
+        &lt;strong&gt;MutCube&lt;/strong&gt;
+        &lt;button class=&quot;mc-icon-button&quot; type=&quot;button&quot; aria-label=&quot;搜索&quot;&gt;&lt;i data-lucide=&quot;search&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;
+      &lt;/div&gt;
+      &lt;section class=&quot;mc-profile&quot; aria-label=&quot;个人信息&quot;&gt;
+        &lt;div class=&quot;mc-user-row&quot;&gt;&lt;span class=&quot;mc-avatar&quot;&gt;路&lt;/span&gt;&lt;strong&gt;失路人&lt;/strong&gt;&lt;/div&gt;
+        &lt;div class=&quot;mc-quick-actions&quot;&gt;
+          &lt;button type=&quot;button&quot;&gt;&lt;i data-lucide=&quot;star&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;收藏&lt;/span&gt;&lt;/button&gt;
+          &lt;button type=&quot;button&quot;&gt;&lt;i data-lucide=&quot;settings&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;设置&lt;/span&gt;&lt;/button&gt;
+          &lt;button type=&quot;button&quot; aria-label=&quot;预留功能一&quot;&gt;&lt;i data-lucide=&quot;circle-dashed&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;待定&lt;/span&gt;&lt;/button&gt;
+          &lt;button type=&quot;button&quot; aria-label=&quot;预留功能二&quot;&gt;&lt;i data-lucide=&quot;circle-dashed&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;待定&lt;/span&gt;&lt;/button&gt;
+        &lt;/div&gt;
+      &lt;/section&gt;
+      &lt;section class=&quot;mc-drawer-section mc-pinned&quot; aria-label=&quot;置顶内容&quot;&gt;
+        &lt;h3&gt;置顶&lt;/h3&gt;
+        &lt;button type=&quot;button&quot; class=&quot;mc-drawer-row&quot;&gt;
+          &lt;i data-lucide=&quot;pin&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;渐进训练&lt;/span&gt;&lt;small&gt;项目&lt;/small&gt;
+        &lt;/button&gt;
+        &lt;button type=&quot;button&quot; class=&quot;mc-drawer-row&quot;&gt;
+          &lt;i data-lucide=&quot;pin&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;每周计划整理&lt;/span&gt;&lt;small&gt;对话&lt;/small&gt;
+        &lt;/button&gt;
+      &lt;/section&gt;
+      &lt;section class=&quot;mc-drawer-section&quot;&gt;
+        &lt;h3&gt;项目&lt;/h3&gt;
+        &lt;button type=&quot;button&quot; class=&quot;mc-drawer-row&quot;&gt;&lt;i data-lucide=&quot;folder&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;渐进训练&lt;/span&gt;&lt;/button&gt;
+        &lt;button type=&quot;button&quot; class=&quot;mc-drawer-row&quot;&gt;&lt;i data-lucide=&quot;folder&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;span&gt;深度学习&lt;/span&gt;&lt;/button&gt;
+      &lt;/section&gt;
+      &lt;button id=&quot;mc-new-chat&quot; class=&quot;mc-new-chat&quot; type=&quot;button&quot;&gt;&lt;i data-lucide=&quot;square-pen&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;新建对话&lt;/button&gt;
+      &lt;section class=&quot;mc-drawer-section mc-recent&quot;&gt;
+        &lt;h3&gt;最近&lt;/h3&gt;
+        &lt;button type=&quot;button&quot; class=&quot;mc-history&quot;&gt;&lt;strong&gt;今天肩部不太舒服&lt;/strong&gt;&lt;small&gt;刚刚&lt;/small&gt;&lt;/button&gt;
+        &lt;button type=&quot;button&quot; class=&quot;mc-history&quot;&gt;&lt;strong&gt;训练日的饮食安排&lt;/strong&gt;&lt;small&gt;昨天&lt;/small&gt;&lt;/button&gt;
+        &lt;button type=&quot;button&quot; class=&quot;mc-history&quot;&gt;&lt;strong&gt;把复杂任务拆成一周计划&lt;/strong&gt;&lt;small&gt;周一&lt;/small&gt;&lt;/button&gt;
+      &lt;/section&gt;
+    &lt;/aside&gt;
+  &lt;/div&gt;
+  &lt;p id=&quot;mc-status&quot; class=&quot;mc-status&quot; aria-live=&quot;polite&quot;&gt;当前：空白新对话；未发送内容不会进入历史记录。&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;style&gt;
+  #mutcube-mock {
+    --mc-page: light-dark(#f4f4f2, #151515);
+    --mc-surface: light-dark(#ffffff, #222222);
+    --mc-surface-soft: light-dark(#f3f3f1, #2c2c2c);
+    --mc-ink: light-dark(#161616, #f4f4f4);
+    --mc-muted: light-dark(#777775, #a9a9a5);
+    --mc-line: light-dark(#e7e7e3, #393936);
+    --mc-accent: light-dark(#171717, #f4f4f4);
+    --mc-accent-ink: light-dark(#ffffff, #171717);
+    color-scheme: light dark;
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+    width: 100%;
+    color: var(--mc-ink);
+    font-family: &quot;Noto Sans SC&quot;, &quot;PingFang SC&quot;, system-ui, sans-serif;
+  }
+  #mutcube-mock * { box-sizing: border-box; }
+  #mutcube-mock button, #mutcube-mock textarea { font: inherit; color: inherit; }
+  #mutcube-mock button { cursor: pointer; }
+  #mutcube-mock i[data-lucide] { display: inline-grid; width: 20px; height: 20px; place-items: center; font-style: normal; line-height: 1; }
+  #mutcube-mock i[data-lucide=&quot;menu&quot;]::before { content: &quot;☰&quot;; }
+  #mutcube-mock i[data-lucide=&quot;circle-dashed&quot;]::before { content: &quot;◌&quot;; }
+  #mutcube-mock i[data-lucide=&quot;plus&quot;]::before { content: &quot;+&quot;; font-size: 24px; }
+  #mutcube-mock i[data-lucide=&quot;arrow-up&quot;]::before { content: &quot;↑&quot;; font-size: 21px; }
+  #mutcube-mock i[data-lucide=&quot;camera&quot;]::before { content: &quot;▣&quot;; }
+  #mutcube-mock i[data-lucide=&quot;mic&quot;]::before { content: &quot;●&quot;; font-size: 12px; }
+  #mutcube-mock i[data-lucide=&quot;search&quot;]::before { content: &quot;⌕&quot;; font-size: 22px; }
+  #mutcube-mock i[data-lucide=&quot;star&quot;]::before { content: &quot;☆&quot;; font-size: 21px; }
+  #mutcube-mock i[data-lucide=&quot;settings&quot;]::before { content: &quot;⚙&quot;; }
+  #mutcube-mock i[data-lucide=&quot;folder&quot;]::before { content: &quot;□&quot;; }
+  #mutcube-mock i[data-lucide=&quot;image&quot;]::before { content: &quot;▧&quot;; }
+  #mutcube-mock i[data-lucide=&quot;gauge&quot;]::before { content: &quot;◔&quot;; }
+  #mutcube-mock i[data-lucide=&quot;chevron-down&quot;]::before { content: &quot;⌄&quot;; }
+  #mutcube-mock i[data-lucide=&quot;chevron-right&quot;]::before { content: &quot;›&quot;; font-size: 24px; }
+  #mutcube-mock i[data-lucide=&quot;square-pen&quot;]::before { content: &quot;✎&quot;; }
+  #mutcube-mock i[data-lucide=&quot;dumbbell&quot;]::before { content: &quot;↔&quot;; }
+  #mutcube-mock i[data-lucide=&quot;book-open&quot;]::before { content: &quot;▤&quot;; }
+  #mutcube-mock i[data-lucide=&quot;pin&quot;]::before { content: &quot;⌖&quot;; }
+  #mutcube-mock i[data-lucide=&quot;x&quot;]::before { content: &quot;×&quot;; font-size: 22px; }
+  #mutcube-mock svg { width: 20px; height: 20px; }
+  .mc-phone {
+    position: relative;
+    width: min(390px, 100%);
+    height: 780px;
+    overflow: hidden;
+    border: 1px solid var(--mc-line);
+    border-radius: 38px;
+    background: var(--mc-page);
+    box-shadow: 0 24px 70px light-dark(rgb(20 20 20 / 12%), rgb(0 0 0 / 45%));
+  }
+  .mc-topbar {
+    position: absolute;
+    z-index: 3;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: grid;
+    grid-template-columns: 48px 1fr 48px;
+    align-items: center;
+    gap: 18px;
+    padding: 22px 18px 12px;
+    background: color-mix(in srgb, var(--mc-page) 92%, transparent);
+  }
+  .mc-icon-button {
+    display: inline-grid;
+    place-items: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--mc-surface);
+  }
+  .mc-switch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 4px;
+    border-radius: 24px;
+    background: var(--mc-surface-soft);
+  }
+  .mc-switch-button {
+    min-height: 40px;
+    border: 0;
+    border-radius: 20px;
+    background: transparent;
+  }
+  .mc-switch-button.is-active { background: var(--mc-surface); font-weight: 500; }
+  .mc-stage { height: 100%; padding: 92px 22px 142px; }
+  .mc-home { display: flex; min-height: 100%; flex-direction: column; }
+  .mc-messages { display: flex; min-height: 100%; flex-direction: column; justify-content: flex-end; gap: 12px; padding-bottom: 12px; }
+  .mc-bubble { align-self: flex-end; max-width: 82%; padding: 11px 15px; border-radius: 20px 20px 6px 20px; background: var(--mc-accent); color: var(--mc-accent-ink); line-height: 1.55; }
+  .mc-reply { align-self: flex-start; max-width: 88%; padding: 11px 2px; color: var(--mc-ink); line-height: 1.55; }
+  .mc-spacer { flex: 1; }
+  .mc-prompts { display: grid; gap: 6px; padding-bottom: 18px; }
+  .mc-prompt {
+    min-height: 46px;
+    padding: 8px 2px;
+    border: 0;
+    border-bottom: 1px solid var(--mc-line);
+    background: transparent;
+    text-align: left;
+    color: var(--mc-muted);
+  }
+  .mc-template-home { padding-top: 16px; }
+  .mc-template-search {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) 36px;
+    align-items: center;
+    gap: 8px;
+    min-height: 48px;
+    margin-bottom: 18px;
+    padding: 4px 6px 4px 14px;
+    border: 1px solid var(--mc-line);
+    border-radius: 24px;
+    background: var(--mc-surface);
+  }
+  .mc-template-search input { min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; color: inherit; }
+  .mc-template-search input::placeholder { color: var(--mc-muted); }
+  .mc-template-search button { display: grid; width: 36px; height: 36px; place-items: center; border: 0; border-radius: 50%; background: transparent; }
+  .mc-template-heading { margin-bottom: 26px; }
+  .mc-template-heading h2, .mc-template-heading p { margin: 0; }
+  .mc-template-heading p { margin-top: 6px; color: var(--mc-muted); }
+  .mc-service {
+    display: grid;
+    grid-template-columns: 48px 1fr 24px;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    min-height: 82px;
+    margin-bottom: 12px;
+    padding: 14px;
+    border: 0;
+    border-radius: 22px;
+    background: var(--mc-surface);
+    text-align: left;
+  }
+  .mc-service-icon { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 16px; background: var(--mc-surface-soft); }
+  .mc-service strong, .mc-service small { display: block; }
+  .mc-service small { margin-top: 4px; color: var(--mc-muted); }
+  .mc-composer-zone { position: absolute; z-index: 4; left: 14px; right: 14px; bottom: 18px; }
+  .mc-composer {
+    display: grid;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--mc-line);
+    border-radius: 26px;
+    background: var(--mc-surface);
+    box-shadow: 0 10px 30px light-dark(rgb(20 20 20 / 8%), rgb(0 0 0 / 30%));
+    transition: padding 160ms ease, border-radius 160ms ease;
+  }
+  .mc-message {
+    width: 100%;
+    min-height: 38px;
+    max-height: 116px;
+    resize: none;
+    padding: 9px 8px 3px;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    overflow: auto;
+  }
+  .mc-message::placeholder { color: var(--mc-muted); }
+  .mc-composer:not(.is-expanded) { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+  .mc-composer:not(.is-expanded) .mc-composer-actions { display: contents; }
+  .mc-composer:not(.is-expanded) .mc-strength { display: none; }
+  .mc-composer:not(.is-expanded) .mc-camera { display: none; }
+  .mc-composer-actions { display: flex; align-items: center; justify-content: space-between; }
+  .mc-action-cluster { display: flex; align-items: center; gap: 2px; }
+  .mc-action-cluster .mc-icon-button { min-width: 36px; min-height: 36px; background: transparent; }
+  .mc-action-primary { background: var(--mc-accent) !important; color: var(--mc-accent-ink) !important; }
+  .mc-strength {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 8px;
+    border: 0;
+    background: transparent;
+  }
+  .mc-strength svg:last-child { width: 14px !important; }
+  .mc-attach-sheet {
+    position: absolute;
+    z-index: 8;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 10px 16px 20px;
+    border-radius: 28px 28px 0 0;
+    background: var(--mc-surface);
+    box-shadow: 0 -18px 50px light-dark(rgb(20 20 20 / 12%), rgb(0 0 0 / 38%));
+  }
+  .mc-sheet-handle { width: 38px; height: 4px; margin: 0 auto 16px; border-radius: 4px; background: var(--mc-line); }
+  .mc-attach-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .mc-attach-actions button {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    min-height: 92px;
+    padding: 12px 4px;
+    border: 0;
+    border-radius: 18px;
+    background: var(--mc-surface-soft);
+  }
+  .mc-attach-actions span { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: var(--mc-surface); }
+  .mc-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; margin-top: 14px; }
+  .mc-gallery button { aspect-ratio: 1.15; border: 0; background: linear-gradient(145deg, var(--mc-surface-soft), var(--mc-line)); }
+  .mc-gallery button:nth-child(2n) { background: linear-gradient(35deg, var(--mc-line), var(--mc-surface-soft)); }
+  .mc-scrim { position: absolute; z-index: 7; inset: 0; background: rgb(0 0 0 / 35%); }
+  .mc-drawer {
+    position: absolute;
+    z-index: 9;
+    inset: 0 54px 0 0;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 18px 20px;
+    border-radius: 38px 22px 22px 38px;
+    background: var(--mc-surface);
+    box-shadow: 16px 0 50px rgb(0 0 0 / 18%);
+  }
+  .mc-brand-row, .mc-user-row { display: flex; align-items: center; justify-content: space-between; }
+  .mc-brand-row { min-height: 48px; }
+  .mc-brand-row &gt; strong { font-size: 1.35em; }
+  .mc-profile { margin-top: 16px; padding: 15px; border-radius: 20px; background: var(--mc-surface-soft); }
+  .mc-user-row { justify-content: flex-start; gap: 12px; }
+  .mc-avatar { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: var(--mc-accent); color: var(--mc-accent-ink); font-weight: 500; }
+  .mc-quick-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 14px; }
+  .mc-quick-actions button { display: grid; justify-items: center; gap: 5px; min-height: 54px; padding: 5px 0; border: 0; background: transparent; color: var(--mc-muted); }
+  .mc-quick-actions span { font-size: .78em; }
+  .mc-drawer-section { margin-top: 18px; }
+  .mc-drawer-section h3 { margin: 0 0 7px; color: var(--mc-muted); }
+  .mc-drawer-row, .mc-history {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 42px;
+    padding: 8px 7px;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    text-align: left;
+  }
+  .mc-pinned .mc-drawer-row { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; }
+  .mc-pinned .mc-drawer-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mc-pinned .mc-drawer-row small { color: var(--mc-muted); }
+  .mc-new-chat {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 72%;
+    min-height: 48px;
+    order: 10;
+    flex: 0 0 auto;
+    margin: auto auto 0;
+    border: 0;
+    border-radius: 24px;
+    background: var(--mc-accent);
+    color: var(--mc-accent-ink) !important;
+    font-weight: 500;
+  }
+  .mc-recent { margin-top: 18px; }
+  .mc-history { display: grid; grid-template-columns: 1fr auto; }
+  .mc-history strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 400; }
+  .mc-history small { color: var(--mc-muted); }
+  .mc-status { margin: 0; color: var(--muted-foreground); text-align: center; }
+  [hidden] { display: none !important; }
+  @media (max-width: 360px) {
+    .mc-phone { height: 720px; border-radius: 28px; }
+    .mc-topbar { gap: 8px; padding-inline: 12px; }
+    .mc-stage { padding-inline: 16px; }
+    .mc-drawer { inset-right: 38px; border-radius: 28px 18px 18px 28px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .mc-composer { transition: none; } }
+&lt;/style&gt;
+
+&lt;script&gt;
+  const mcRoot = document.getElementById(&#x27;mutcube-mock&#x27;);
+  const mcComposer = document.getElementById(&#x27;mc-composer&#x27;);
+  const mcMessage = document.getElementById(&#x27;mc-message&#x27;);
+  const mcAddSend = document.getElementById(&#x27;mc-add-send&#x27;);
+  const mcAttach = document.getElementById(&#x27;mc-attach-sheet&#x27;);
+  const mcDrawer = document.getElementById(&#x27;mc-drawer&#x27;);
+  const mcScrim = document.getElementById(&#x27;mc-scrim&#x27;);
+  const mcStatus = document.getElementById(&#x27;mc-status&#x27;);
+  const mcChatTab = document.getElementById(&#x27;mc-chat-tab&#x27;);
+  const mcTemplateTab = document.getElementById(&#x27;mc-template-tab&#x27;);
+  const mcChatHome = document.getElementById(&#x27;mc-chat-home&#x27;);
+  const mcTemplateHome = document.getElementById(&#x27;mc-template-home&#x27;);
+  const mcMessages = document.getElementById(&#x27;mc-messages&#x27;);
+  const mcComposerZone = document.querySelector(&#x27;.mc-composer-zone&#x27;);
+  const mcContextAction = document.getElementById(&#x27;mc-context-action&#x27;);
+  const mcTemplateSearch = document.getElementById(&#x27;mc-template-search&#x27;);
+  const mcTemplateQuery = document.getElementById(&#x27;mc-template-query&#x27;);
+  const mcState = { startup: &#x27;draft&#x27;, composerRadius: 26 };
+
+  function mcRefreshIcons() {
+    if (globalThis.lucide) lucide.createIcons({ attrs: { width: 20, height: 20 } });
+  }
+
+  function mcSetComposer(expanded) {
+    mcComposer.classList.toggle(&#x27;is-expanded&#x27;, expanded);
+    mcStatus.textContent = expanded ? &#x27;当前：输入框展开，可选择模型强度、相机、语音和附件。&#x27; : &#x27;当前：空白新对话；未发送内容不会进入历史记录。&#x27;;
+  }
+
+  function mcUpdateAction() {
+    const hasText = mcMessage.value.trim().length &gt; 0;
+    mcAddSend.innerHTML = `&lt;i data-lucide=&quot;${hasText ? &#x27;arrow-up&#x27; : &#x27;plus&#x27;}&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;`;
+    mcAddSend.setAttribute(&#x27;aria-label&#x27;, hasText ? &#x27;发送消息&#x27; : &#x27;添加附件&#x27;);
+    mcRefreshIcons();
+  }
+
+  function mcCloseOverlays() {
+    mcAttach.hidden = true;
+    mcDrawer.hidden = true;
+    mcScrim.hidden = true;
+  }
+
+  function mcSelectSurface(template) {
+    mcMessages.hidden = true;
+    mcChatHome.hidden = template;
+    mcTemplateHome.hidden = !template;
+    mcComposerZone.hidden = template;
+    mcContextAction.innerHTML = `&lt;i data-lucide=&quot;${template ? &#x27;search&#x27; : &#x27;circle-dashed&#x27;}&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;`;
+    mcContextAction.setAttribute(&#x27;aria-label&#x27;, template ? &#x27;搜索模板&#x27; : &#x27;预留功能位&#x27;);
+    mcContextAction.dataset.tooltip = template ? &#x27;搜索模板&#x27; : &#x27;预留功能位&#x27;;
+    if (!template) {
+      mcTemplateSearch.hidden = true;
+      mcTemplateQuery.value = &#x27;&#x27;;
+      document.querySelectorAll(&#x27;.mc-service&#x27;).forEach((item) =&gt; { item.hidden = false; });
+    }
+    mcChatTab.classList.toggle(&#x27;is-active&#x27;, !template);
+    mcTemplateTab.classList.toggle(&#x27;is-active&#x27;, template);
+    mcChatTab.setAttribute(&#x27;aria-selected&#x27;, String(!template));
+    mcTemplateTab.setAttribute(&#x27;aria-selected&#x27;, String(template));
+    mcRefreshIcons();
+    mcStatus.textContent = template ? &#x27;当前：模板总览；聊天与模板是平级界面。&#x27; : &#x27;当前：空白新对话；未发送内容不会进入历史记录。&#x27;;
+  }
+
+  mcMessage.addEventListener(&#x27;focus&#x27;, () =&gt; mcSetComposer(true));
+  mcMessage.addEventListener(&#x27;input&#x27;, mcUpdateAction);
+  mcAddSend.addEventListener(&#x27;click&#x27;, () =&gt; {
+    if (mcMessage.value.trim()) {
+      const text = mcMessage.value.trim();
+      mcChatHome.hidden = true;
+      mcTemplateHome.hidden = true;
+      mcMessages.hidden = false;
+      mcMessages.innerHTML = `&lt;div class=&quot;mc-bubble&quot;&gt;&lt;/div&gt;&lt;div class=&quot;mc-reply&quot;&gt;这是交互原型中的回复占位。真实产品中将在这里流式显示模型回答。&lt;/div&gt;`;
+      mcMessages.querySelector(&#x27;.mc-bubble&#x27;).textContent = text;
+      mcMessage.value = &#x27;&#x27;;
+      mcUpdateAction();
+      mcSetComposer(false);
+      mcStatus.textContent = &#x27;当前：消息已发送，并生成一条对话记录。&#x27;;
+      return;
+    }
+    mcAttach.hidden = false;
+    mcScrim.hidden = false;
+    mcStatus.textContent = &#x27;当前：附件面板，支持拍照、相册和本地文件。&#x27;;
+  });
+  document.getElementById(&#x27;mc-menu&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; {
+    mcDrawer.hidden = false;
+    mcScrim.hidden = false;
+    mcStatus.textContent = &#x27;当前：侧边栏，依次展示品牌、个人信息、项目、新建对话和最近聊天。&#x27;;
+  });
+  mcScrim.addEventListener(&#x27;click&#x27;, mcCloseOverlays);
+  document.getElementById(&#x27;mc-new-chat&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; {
+    mcCloseOverlays(); mcMessage.value = &#x27;&#x27;; mcUpdateAction(); mcSetComposer(false); mcSelectSurface(false);
+  });
+  mcChatTab.addEventListener(&#x27;click&#x27;, () =&gt; mcSelectSurface(false));
+  mcTemplateTab.addEventListener(&#x27;click&#x27;, () =&gt; mcSelectSurface(true));
+  mcContextAction.addEventListener(&#x27;click&#x27;, () =&gt; {
+    if (mcTemplateHome.hidden) {
+      mcStatus.textContent = &#x27;右上角为聊天页预留功能位。&#x27;;
+      return;
+    }
+    mcTemplateSearch.hidden = !mcTemplateSearch.hidden;
+    if (!mcTemplateSearch.hidden) mcTemplateQuery.focus();
+  });
+  document.getElementById(&#x27;mc-close-search&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; {
+    mcTemplateSearch.hidden = true;
+    mcTemplateQuery.value = &#x27;&#x27;;
+    document.querySelectorAll(&#x27;.mc-service&#x27;).forEach((item) =&gt; { item.hidden = false; });
+  });
+  mcTemplateQuery.addEventListener(&#x27;input&#x27;, () =&gt; {
+    const query = mcTemplateQuery.value.trim().toLowerCase();
+    document.querySelectorAll(&#x27;.mc-service&#x27;).forEach((item) =&gt; {
+      item.hidden = query.length &gt; 0 &amp;&amp; !item.textContent.toLowerCase().includes(query);
+    });
+  });
+  document.querySelectorAll(&#x27;.mc-attach-actions button&#x27;).forEach((button) =&gt; button.addEventListener(&#x27;click&#x27;, () =&gt; {
+    mcCloseOverlays();
+    mcSetComposer(true);
+    mcStatus.textContent = `已选择“${button.textContent.trim()}”，原型不读取真实文件。`;
+  }));
+  document.querySelectorAll(&#x27;.mc-service&#x27;).forEach((button) =&gt; button.addEventListener(&#x27;click&#x27;, () =&gt; {
+    mcStatus.textContent = `准备进入“${button.querySelector(&#x27;strong&#x27;).textContent}”模板。`;
+  }));
+
+  function mcRenderTweak() {
+    mcComposer.style.borderRadius = `${mcState.composerRadius}px`;
+    mcStatus.textContent = mcState.startup === &#x27;last&#x27; ? &#x27;启动策略：恢复最近一次对话。&#x27; : &#x27;启动策略：创建不入历史的空白草稿。&#x27;;
+  }
+  mcRenderTweak();
+  mcRefreshIcons();
+
+  if (globalThis.Tweak) {
+    const mcTweak = new Tweak({ container: mcRoot, onChange: mcRenderTweak });
+    mcTweak.addSelect(mcState, &#x27;startup&#x27;, { label: &#x27;启动页面&#x27;, options: [{label:&#x27;空白新对话&#x27;,value:&#x27;draft&#x27;},{label:&#x27;恢复最近对话&#x27;,value:&#x27;last&#x27;}], reference: &#x27;mutcube.startup&#x27; });
+    mcTweak.addSlider(mcState, &#x27;composerRadius&#x27;, { label: &#x27;输入框圆角&#x27;, min: 16, max: 32, unit: &#x27;px&#x27;, reference: &#x27;mutcube.composer.radius&#x27; });
+  }
+&lt;/script&gt;
+
+&lt;script src=&quot;https://unpkg.com/@floating-ui/core@1.7.3/dist/floating-ui.core.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://unpkg.com/@floating-ui/dom@1.7.4/dist/floating-ui.dom.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  if (window.FloatingUIDOM == null) {
+    return;
+  }
+  const { autoUpdate, computePosition, flip, offset, shift, size } =
+    window.FloatingUIDOM;
+  const tooltipPlacements = new Set([&quot;top&quot;, &quot;right&quot;, &quot;bottom&quot;, &quot;left&quot;]);
+  const tooltipId = `codex-visualization-tooltip-${
+    window.crypto?.randomUUID?.() ?? Date.now().toString(36)
+  }`;
+  const tooltipGap = 5;
+  const hoverDelay = 700;
+  const skipDelay = 300;
+  let activeTrigger = null;
+  let pendingTrigger = null;
+  let tooltip = null;
+  let openTimeout = null;
+  let autoUpdateCleanup = null;
+  let positionRequest = 0;
+  let skipDelayUntil = 0;
+  let lastPointerWasTouch = false;
+  let pinnedByTouch = false;
+
+  const getTrigger = (target) =&gt;
+    target?.nodeType === Node.ELEMENT_NODE
+      ? target.closest(&quot;[data-tooltip]&quot;)
+      : null;
+  const containsTarget = (trigger, target) =&gt;
+    target?.nodeType != null &amp;&amp; trigger.contains(target);
+  const getContent = (trigger) =&gt;
+    trigger.getAttribute(&quot;data-tooltip&quot;)?.trim() ?? &quot;&quot;;
+  const getPlacement = (trigger) =&gt; {
+    const placement = trigger.getAttribute(&quot;data-tooltip-placement&quot;);
+    return tooltipPlacements.has(placement) ? placement : &quot;top&quot;;
+  };
+  const getTooltip = () =&gt; {
+    if (tooltip == null) {
+      tooltip = document.createElement(&quot;div&quot;);
+      tooltip.id = tooltipId;
+      tooltip.className = &quot;tooltip&quot;;
+      tooltip.setAttribute(&quot;role&quot;, &quot;tooltip&quot;);
+    }
+    return tooltip;
+  };
+  const setDescribedBy = (trigger, described) =&gt; {
+    const ids = new Set(
+      (trigger.getAttribute(&quot;aria-describedby&quot;) ?? &quot;&quot;)
+        .split(/\s+/)
+        .filter(Boolean),
+    );
+    if (described) {
+      ids.add(tooltipId);
+    } else {
+      ids.delete(tooltipId);
+    }
+    if (ids.size === 0) {
+      trigger.removeAttribute(&quot;aria-describedby&quot;);
+    } else {
+      trigger.setAttribute(&quot;aria-describedby&quot;, [...ids].join(&quot; &quot;));
+    }
+  };
+  const clearOpenTimeout = () =&gt; {
+    if (openTimeout != null) {
+      window.clearTimeout(openTimeout);
+      openTimeout = null;
+    }
+    pendingTrigger = null;
+  };
+  const closeTooltip = (activateSkipDelay = true) =&gt; {
+    clearOpenTimeout();
+    pinnedByTouch = false;
+    positionRequest += 1;
+    autoUpdateCleanup?.();
+    autoUpdateCleanup = null;
+    if (activeTrigger == null) {
+      return;
+    }
+    setDescribedBy(activeTrigger, false);
+    activeTrigger = null;
+    tooltip?.remove();
+    if (activateSkipDelay) {
+      skipDelayUntil = Date.now() + skipDelay;
+    }
+  };
+  const updatePosition = (trigger, floating) =&gt; {
+    const request = ++positionRequest;
+    void computePosition(trigger, floating, {
+      middleware: [
+        offset(tooltipGap),
+        flip({ padding: tooltipGap }),
+        shift({ padding: tooltipGap }),
+        size({
+          padding: tooltipGap,
+          apply({ availableHeight, availableWidth, elements }) {
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-width&quot;,
+              `${Math.max(0, availableWidth)}px`,
+            );
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-height&quot;,
+              `${Math.max(0, availableHeight)}px`,
+            );
+          },
+        }),
+      ],
+      placement: getPlacement(trigger),
+      strategy: &quot;fixed&quot;,
+    })
+      .then(({ x, y }) =&gt; {
+        if (activeTrigger !== trigger || request !== positionRequest) {
+          return;
+        }
+        const scale = window.devicePixelRatio || 1;
+        floating.style.transform = `translate(${Math.round(x * scale) / scale}px, ${Math.round(y * scale) / scale}px)`;
+        floating.style.visibility = &quot;visible&quot;;
+      })
+      .catch(() =&gt; {
+        if (activeTrigger === trigger &amp;&amp; request === positionRequest) {
+          closeTooltip(false);
+        }
+      });
+  };
+  const openTooltip = (trigger) =&gt; {
+    const content = getContent(trigger);
+    if (!trigger.isConnected || content.length === 0) {
+      return;
+    }
+    clearOpenTimeout();
+    if (activeTrigger === trigger) {
+      return;
+    }
+    closeTooltip();
+    const floating = getTooltip();
+    floating.textContent = content;
+    floating.style.visibility = &quot;hidden&quot;;
+    floating.style.transform = &quot;translate(0, 0)&quot;;
+    document.body.appendChild(floating);
+    activeTrigger = trigger;
+    setDescribedBy(trigger, true);
+    autoUpdateCleanup = autoUpdate(trigger, floating, () =&gt; {
+      updatePosition(trigger, floating);
+    });
+  };
+  const requestOpen = (trigger, immediate = false) =&gt; {
+    if (
+      getContent(trigger).length === 0 ||
+      activeTrigger === trigger ||
+      pendingTrigger === trigger
+    ) {
+      return;
+    }
+    clearOpenTimeout();
+    pendingTrigger = trigger;
+    const delay =
+      immediate || activeTrigger != null || Date.now() &lt; skipDelayUntil
+        ? 0
+        : hoverDelay;
+    if (delay === 0) {
+      openTooltip(trigger);
+      return;
+    }
+    openTimeout = window.setTimeout(() =&gt; {
+      openTimeout = null;
+      pendingTrigger = null;
+      openTooltip(trigger);
+    }, delay);
+  };
+  const handlePointerOpen = (event) =&gt; {
+    if (event.pointerType === &quot;touch&quot;) {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    requestOpen(trigger);
+  };
+  const handlePointer = (event) =&gt; {
+    lastPointerWasTouch =
+      event.type === &quot;pointerdown&quot; &amp;&amp; event.pointerType === &quot;touch&quot;;
+  };
+  const handleTouchClick = (event) =&gt; {
+    const isTouch = event.pointerType === &quot;touch&quot; || lastPointerWasTouch;
+    lastPointerWasTouch = false;
+    if (!isTouch || event.detail === 0) {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (
+      trigger == null ||
+      !trigger.isConnected ||
+      getContent(trigger).length === 0 ||
+      (pinnedByTouch &amp;&amp; activeTrigger === trigger)
+    ) {
+      if (pinnedByTouch) {
+        closeTooltip();
+      }
+      return;
+    }
+    openTooltip(trigger);
+    pinnedByTouch = activeTrigger === trigger;
+    window.setTimeout(() =&gt; {
+      if (activeTrigger === trigger &amp;&amp; !trigger.isConnected) {
+        closeTooltip(false);
+      }
+    }, 0);
+  };
+  const handleLeave = (event) =&gt; {
+    if (pinnedByTouch) {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const handleFocusIn = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (trigger?.matches(&quot;:focus-visible&quot;)) {
+      requestOpen(trigger, true);
+    }
+  };
+  const handleKeyDown = (event) =&gt; {
+    if (event.key === &quot;Escape&quot;) {
+      closeTooltip();
+    }
+  };
+  const handleContextMenu = (event) =&gt; {
+    lastPointerWasTouch = false;
+    const trigger = getTrigger(event.target);
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const destroy = () =&gt; {
+    closeTooltip(false);
+    lastPointerWasTouch = false;
+    document.removeEventListener(&quot;pointerover&quot;, handlePointerOpen);
+    document.removeEventListener(&quot;pointerdown&quot;, handlePointer);
+    document.removeEventListener(&quot;pointercancel&quot;, handlePointer);
+    document.removeEventListener(&quot;click&quot;, handleTouchClick);
+    document.removeEventListener(&quot;pointerout&quot;, handleLeave);
+    document.removeEventListener(&quot;focusin&quot;, handleFocusIn);
+    document.removeEventListener(&quot;focusout&quot;, handleLeave);
+    document.removeEventListener(&quot;keydown&quot;, handleKeyDown);
+    document.removeEventListener(&quot;contextmenu&quot;, handleContextMenu);
+    tooltip = null;
+  };
+
+  document.addEventListener(&quot;pointerover&quot;, handlePointerOpen);
+  document.addEventListener(&quot;pointerdown&quot;, handlePointer);
+  document.addEventListener(&quot;pointercancel&quot;, handlePointer);
+  document.addEventListener(&quot;click&quot;, handleTouchClick);
+  document.addEventListener(&quot;pointerout&quot;, handleLeave);
+  document.addEventListener(&quot;focusin&quot;, handleFocusIn);
+  document.addEventListener(&quot;focusout&quot;, handleLeave);
+  document.addEventListener(&quot;keydown&quot;, handleKeyDown);
+  document.addEventListener(&quot;contextmenu&quot;, handleContextMenu);
+  window.addEventListener(&quot;pagehide&quot;, destroy, { once: true });
+})();
+&lt;/script&gt;
+&lt;script id=&quot;codex-visualization-tabs&quot;&gt;
+(() =&gt; {
+  const selector = &#x27;.nav[role=&quot;tablist&quot;] [role=&quot;tab&quot;]&#x27;;
+  const disabled = &#x27;:disabled,[aria-disabled=&quot;true&quot;]&#x27;;
+  const selectTab = (selected) =&gt; {
+    const panelId = selected.getAttribute(&quot;aria-controls&quot;);
+    for (const tab of selected.closest(&#x27;[role=&quot;tablist&quot;]&#x27;).querySelectorAll(&#x27;[role=&quot;tab&quot;]&#x27;)) {
+      const active = tab === selected;
+      tab.classList.toggle(&quot;active&quot;, active);
+      tab.setAttribute(&quot;aria-selected&quot;, String(active));
+      const id = tab.getAttribute(&quot;aria-controls&quot;);
+      const panel = id &amp;&amp; document.getElementById(id);
+      if (panel != null) {
+        panel.hidden = id !== panelId;
+        if (!panel.hidden &amp;&amp; selected.id) {
+          panel.setAttribute(&quot;aria-labelledby&quot;, selected.id);
+        }
+      }
+    }
+  };
+  const interact = (event) =&gt; {
+    const tab = event.target?.closest?.(selector);
+    if (event.defaultPrevented || tab == null || tab.matches(disabled)) {
+      return;
+    }
+    if (event.type === &quot;click&quot;) {
+      selectTab(tab);
+      return;
+    }
+    const tabs = Array.from(
+      tab.closest(&#x27;[role=&quot;tablist&quot;]&#x27;).querySelectorAll(&#x27;[role=&quot;tab&quot;]&#x27;),
+    ).filter((candidate) =&gt; !candidate.matches(disabled));
+    const current = tabs.indexOf(tab);
+    let next;
+    if (event.key === &quot;ArrowRight&quot; || event.key === &quot;ArrowDown&quot;) {
+      next = (current + 1) % tabs.length;
+    } else if (event.key === &quot;ArrowLeft&quot; || event.key === &quot;ArrowUp&quot;) {
+      next = (current + tabs.length - 1) % tabs.length;
+    } else if (event.key === &quot;Home&quot;) {
+      next = 0;
+    } else if (event.key === &quot;End&quot;) {
+      next = tabs.length - 1;
+    } else {
+      return;
+    }
+    event.preventDefault();
+    tabs[next].focus();
+    selectTab(tabs[next]);
+  };
+
+  for (const list of document.querySelectorAll(&#x27;.nav[role=&quot;tablist&quot;]&#x27;)) {
+    const selected =
+      list.querySelector(&#x27;[role=&quot;tab&quot;][aria-selected=&quot;true&quot;]&#x27;) ??
+      list.querySelector(&#x27;[role=&quot;tab&quot;].active&#x27;) ??
+      list.querySelector(&#x27;[role=&quot;tab&quot;]&#x27;);
+    if (selected != null) {
+      selectTab(selected);
+    }
+  }
+  document.addEventListener(&quot;click&quot;, interact);
+  document.addEventListener(&quot;keydown&quot;, interact);
+  window.addEventListener(&quot;pagehide&quot;, () =&gt; {
+    document.removeEventListener(&quot;click&quot;, interact);
+    document.removeEventListener(&quot;keydown&quot;, interact);
+  }, { once: true });
+})();
+&lt;/script&gt;
+&lt;script id=&quot;codex-visualization-lucide&quot; async src=&quot;https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  const initialize = () =&gt; {
+    globalThis.lucide?.createIcons({ attrs: { width: 16, height: 16 } });
+  };
+  if (globalThis.lucide != null) {
+    initialize();
+    return;
+  }
+  document
+    .getElementById(&quot;codex-visualization-lucide&quot;)
+    ?.addEventListener(&quot;load&quot;, initialize, { once: true });
+})();
+&lt;/script&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+"></iframe>
+</body>
+</html>

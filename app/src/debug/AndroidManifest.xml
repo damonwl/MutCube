@@ -1,0 +1,6 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application>
+    <!-- Empty debug-only surface; allows a shell launch on devices that block background test launches. -->
+    <activity android:name=".TemplateAcceptanceActivity" android:exported="true" />
+  </application>
+</manifest>

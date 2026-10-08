@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Todo 示例</title><style>
+  :root{font-family:system-ui,sans-serif;color:var(--fg,#24242b);background:var(--bg,#f7f7f8)}
+  body{margin:0;padding:20px}h1{font-size:25px}input,button{font:inherit}input{border:1px solid #aaa;border-radius:12px;padding:12px;min-width:0;flex:1}
+  button{border:0;border-radius:12px;padding:12px;background:var(--action,#4968db);color:var(--onaction,#fff)}
+  .row{display:flex;gap:10px;margin:16px 0}.item{display:flex;align-items:center;gap:12px;padding:14px;margin:10px 0;background:var(--card,#fff);border-radius:16px}
+  .item span{flex:1}.item button{background:transparent;color:var(--fg,#222)}small{color:var(--muted,#777)}
+</style></head><body><h1>待办清单</h1><small id="project">读取项目中…</small>
+<form id="form" class="row"><input id="text" maxlength="200" placeholder="新增待办"><button>添加</button></form>
+<main id="list"></main><small id="status"></small><script type="module" src="app.js"></script></body></html>

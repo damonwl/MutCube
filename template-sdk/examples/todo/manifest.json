@@ -1,0 +1,25 @@
+{
+  "packageVersion": 1,
+  "minHostVersion": "0.1.2",
+  "developer": { "name": "MutCube 示例团队", "license": "MIT" },
+  "permissions": ["data.records", "project.info", "ui.theme", "ui.notice", "ui.confirm"],
+  "networkDomains": [],
+  "resources": {},
+  "template": {
+    "protocolVersion": 2,
+    "id": "example.todo",
+    "version": "1.0.0",
+    "name": "Todo 示例",
+    "entry": "templates/todo/index.html",
+    "capabilities": ["action.run"],
+    "collections": [
+      { "id": "todos", "policy": "MUTABLE", "schema": { "type": "object", "properties": { "text": { "type": "string" }, "done": { "type": "boolean" } }, "required": ["text", "done"], "additionalProperties": false } }
+    ],
+    "actions": [
+      { "id": "todo.list", "description": "分页查询待办", "mode": "LIST", "channels": ["GUI", "CHAT"], "collection": "todos", "inputSchema": { "type": "object", "properties": { "beforeTime": { "type": "integer" }, "beforeKey": { "type": "string" } }, "required": [], "additionalProperties": false } },
+      { "id": "todo.create", "description": "新增待办", "mode": "APPEND", "channels": ["GUI"], "collection": "todos", "inputSchema": { "type": "object", "properties": { "text": { "type": "string" }, "done": { "type": "boolean" } }, "required": ["text", "done"], "additionalProperties": false } },
+      { "id": "todo.update", "description": "更新待办", "mode": "UPDATE", "channels": ["GUI"], "collection": "todos", "inputSchema": { "type": "object", "properties": { "key": { "type": "string" }, "expectedRevision": { "type": "integer" }, "data": { "type": "object", "properties": { "text": { "type": "string" }, "done": { "type": "boolean" } }, "required": ["text", "done"], "additionalProperties": false } }, "required": ["key", "expectedRevision", "data"], "additionalProperties": false } },
+      { "id": "todo.delete", "description": "删除待办", "mode": "DELETE", "channels": ["GUI"], "collection": "todos", "inputSchema": { "type": "object", "properties": { "key": { "type": "string" }, "expectedRevision": { "type": "integer" } }, "required": ["key", "expectedRevision"], "additionalProperties": false } }
+    ]
+  }
+}

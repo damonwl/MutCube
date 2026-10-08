@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>语音能力示例</title><style>
+body{font:16px system-ui,sans-serif;color:var(--fg,#222);background:var(--bg,#f7f7f8);margin:0;padding:20px}
+main{display:grid;gap:14px}textarea{min-height:110px;resize:vertical}textarea,button{font:inherit;padding:12px;border-radius:12px}
+button{border:0;background:var(--action,#4466dd);color:var(--onaction,#fff)}.row{display:flex;gap:8px;flex-wrap:wrap}
+.row button{flex:1}#status{color:var(--muted,#777)}li{padding:6px 0}select{font:inherit;padding:10px;border-radius:10px}
+</style></head><body><main><h1>语音能力示例</h1><p>录音和朗读由宿主管理；模板只处理文字。</p>
+<textarea id="text" aria-label="待朗读或保存的文字" placeholder="输入文字，或通过语音转写"></textarea>
+<div class="row"><button id="speak">朗读</button><button id="stop">停止朗读</button></div>
+<label>识别语言 <select id="language"><option value="">沿用全局设置</option><option value="auto">自动识别</option><option value="en">英语</option><option value="zh">中文</option></select></label>
+<div class="row"><button id="recognize">语音输入</button><button id="finish">完成录音</button></div>
+<button id="save">保存文字</button><p id="status" role="status"></p><ul id="history"></ul>
+</main><script type="module" src="app.js"></script></body></html>

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{--bg:#f7f7f5;--fg:#222;--card:#fff;--muted:#777;--action:#333;--onaction:#fff}*{box-sizing:border-box}body{margin:0;padding:20px;background:var(--bg);color:var(--fg);font:16px system-ui}h2{font-size:20px;margin:0 0 12px}section{background:var(--card);border:1px solid color-mix(in srgb,var(--fg) 12%,transparent);border-radius:18px;padding:18px;margin-bottom:16px}textarea,input{width:100%;font:inherit;background:var(--bg);color:var(--fg);border:1px solid var(--muted);border-radius:10px;padding:12px}textarea{min-height:110px}button{font:inherit;background:var(--action);color:var(--onaction);border:0;padding:10px 16px;border-radius:12px;margin:8px 8px 0 0}button:disabled{opacity:.45}.secondary{background:var(--bg);color:var(--fg);border:1px solid var(--muted)}p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6}.muted{color:var(--muted);font-size:14px}#status{padding:0 4px 16px;white-space:pre-wrap}.record{border-top:1px solid var(--muted);padding:10px 0}nav{margin-bottom:16px}
+dialog{background:var(--card);color:var(--fg);border:1px solid var(--muted);border-radius:18px;padding:20px;max-width:90vw}dialog::backdrop{background:#0006}
+</style></head><body>
+<nav><button class="secondary" id="chat">项目聊天</button><button class="secondary" id="refresh">刷新</button></nav>
+<div id="status" role="status">正在读取项目数据…</div>
+<section><h2>笔记</h2><p class="muted">数据由宿主持久化；当前项目的模板页面与聊天使用同一套服务能力。</p><textarea id="text" placeholder="输入笔记内容"></textarea><button id="save">保存笔记</button><button class="secondary" id="cancel" hidden>取消编辑</button><div id="notes"></div><button class="secondary" id="more" hidden>加载更多</button></section>
+<section><h2>AI 整理</h2><input id="request" value="将最近一条笔记整理成清晰的文稿，保留事实"><button id="generate">生成候选文稿</button><p class="muted">AI 只生成候选，不覆盖笔记或自动启用文稿。</p><div id="candidate"></div></section>
+<section><h2>当前文稿</h2><div id="current"></div></section>
+<section><h2>候选历史</h2><div id="history"></div><button class="secondary" id="historyMore" hidden>加载更多</button></section>
+<dialog id="leaveDialog"><p>当前笔记尚未保存，确定离开？</p><button class="secondary" id="leaveNo">继续编辑</button><button id="leaveYes">放弃并离开</button></dialog>
+<script>
+const $=id=>document.getElementById(id), pending=new Map();let editing=null,currentRevision=0,noteCursor=null,historyCursor=null,busy=false;
+function send(capability,input){const requestId=crypto.randomUUID();return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{pending.delete(requestId);reject(Error('操作超时，请查看运行记录后刷新，避免重复提交。'))},200000);pending.set(requestId,{resolve,reject,timer});MutCube.postMessage(JSON.stringify({protocolVersion:2,requestId,capability,...(input?{input}:{})}));})}
+MutCube.onmessage=e=>{const reply=JSON.parse(e.data),p=pending.get(reply.requestId);if(!p)return;clearTimeout(p.timer);pending.delete(reply.requestId);reply.error?p.reject(Error(reply.error)):p.resolve(reply.result)};
+const run=(actionId,data={})=>send('action.run',{actionId,data});
+function status(text){$('status').textContent=text}
+async function task(fn){if(busy)return;busy=true;document.querySelectorAll('button').forEach(b=>b.disabled=true);try{await fn()}catch(e){status(e.message)}finally{busy=false;document.querySelectorAll('button').forEach(b=>b.disabled=false)}}
+function node(tag,text){const n=document.createElement(tag);n.textContent=text;return n}
+function button(label,fn){const b=node('button',label);b.className='secondary';b.onclick=()=>task(fn);return b}
+function clearEdit(){editing=null;$('text').value='';$('save').textContent='保存笔记';$('cancel').hidden=true}
+async function loadNotes(append=false){const r=(await run('notes.list',append?noteCursor:{})).data;if(!append)$('notes').replaceChildren();for(const row of r.records){const n=node('div','');n.className='record';n.append(node('p',row.data.text),button('编辑',async()=>{editing=row;$('text').value=row.data.text;$('save').textContent='保存修改';$('cancel').hidden=false;$('text').focus()}),button('删除',async()=>{const result=await run('notes.delete',{key:row.key,expectedRevision:row.revision});if(result.data.confirmed){clearEdit();await loadNotes();status('笔记已删除')}}));$('notes').append(n)}noteCursor=r.next;$('more').hidden=!noteCursor;if(!$('notes').children.length)$('notes').append(node('p','尚无笔记，先保存一条再使用 AI 整理。'))}
+async function loadCurrent(){const r=(await run('document.current')).data;currentRevision=r.revision;$('current').replaceChildren(node('p',r.data?r.data.text:'尚无已确认文稿'))}
+function renderCandidate(row,target){const n=node('div','');n.className='record';n.append(node('p',row.data.text),button('预览并确认',async()=>{const r=(await run('document.confirm',{key:row.key,expectedRevision:currentRevision})).data;if(r.confirmed){await loadCurrent();status('文稿已启用，原始笔记及历史候选保持不变')}else status('已取消，候选仍保留')}));target.append(n)}
+async function loadHistory(append=false){const r=(await run('document.list',append?historyCursor:{})).data;if(!append)$('history').replaceChildren();r.records.forEach(row=>renderCandidate(row,$('history')));historyCursor=r.next;$('historyMore').hidden=!historyCursor;if(!$('history').children.length)$('history').append(node('p','暂无候选文稿'))}
+async function refresh(){await loadNotes();await loadCurrent();await loadHistory();status('已加载当前项目数据')}
+$('save').onclick=()=>task(async()=>{const text=$('text').value.trim();if(!text)throw Error('请输入笔记内容');if(editing)await run('notes.update',{key:editing.key,expectedRevision:editing.revision,data:{text}});else await run('notes.save',{text});clearEdit();await loadNotes();status('笔记已保存')});
+$('cancel').onclick=clearEdit;$('more').onclick=()=>task(()=>loadNotes(true));$('historyMore').onclick=()=>task(()=>loadHistory(true));$('refresh').onclick=()=>task(refresh);
+$('generate').onclick=()=>task(async()=>{status('正在整理笔记…');await loadCurrent();const request=$('request').value.trim();if(!request)throw Error('请输入整理要求');const r=await run('document.generate',{request,baseRevision:currentRevision});$('candidate').replaceChildren();renderCandidate({key:r.key,data:r.data},$('candidate'));await loadHistory();status('候选已保存，请预览并确认')});
+let leaveDecision=null;
+function askLeave(){if(leaveDecision)return Promise.resolve(false);return new Promise(resolve=>{leaveDecision=resolve;$('leaveDialog').showModal()})}
+function decideLeave(accepted){const resolve=leaveDecision;leaveDecision=null;$('leaveDialog').close();if(resolve)resolve(accepted)}
+$('leaveNo').onclick=()=>decideLeave(false);$('leaveYes').onclick=()=>decideLeave(true);$('leaveDialog').oncancel=e=>{e.preventDefault();decideLeave(false)};
+window.MutCubeBeforeLeave=async()=>{if(busy){status('操作进行中，请等待完成再离开');return false}return !$('text').value.trim()||await askLeave()};
+$('chat').onclick=async()=>{if(!await window.MutCubeBeforeLeave())return;task(()=>send('navigation.openChat'))};
+let launchReady=false;
+async function openLaunchTarget(){const t=window.MutCubeLaunchTarget;if(!launchReady||busy||!t)return;window.MutCubeLaunchTarget=null;
+ await task(async()=>{if(t.collection==='documents'&&t.recordKey){let cursor={},seen=new Set(),found=null;for(;;){const r=(await run('document.list',cursor)).data;found=r.records.find(row=>row.key===t.recordKey);if(found||!r.next)break;const next=JSON.stringify(r.next);if(seen.has(next))throw Error('历史分页重复');seen.add(next);cursor=r.next}if(found){$('candidate').replaceChildren();renderCandidate(found,$('candidate'));$('candidate').scrollIntoView?.({block:'center'});status('已打开对应文稿，请预览后确认')}else status('对应文稿已不存在')}else (t.collection==='notes'?$('notes'):$('current')).scrollIntoView?.({block:'center'})})
+}
+window.addEventListener('mutcube:open-record',openLaunchTarget);
+task(refresh).then(()=>{launchReady=true;return openLaunchTarget()});
+</script></body></html>

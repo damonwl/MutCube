@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>训练记录</title><style>
+:root{--bg:#f7f7f5;--fg:#171715;--card:#fff;--muted:#777772;--action:#171715;--onaction:#fff;--line:color-mix(in srgb,var(--fg) 13%,transparent);--soft:color-mix(in srgb,var(--fg) 6%,var(--bg))}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px system-ui,sans-serif}button,input,select,textarea{font:inherit;color:inherit}button{border:0;border-radius:12px;padding:11px 15px;background:var(--soft);cursor:pointer}button:disabled{opacity:.45}button:focus-visible{outline:2px solid var(--muted)}input,select,textarea{width:100%;min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:11px}textarea{min-height:76px;resize:vertical}h1,h2,h3,p{margin:0}h1{font-size:24px}h2{font-size:20px}h3{font-size:16px}p{line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}small,.muted{color:var(--muted);font-size:12px}.top{display:flex;align-items:center;justify-content:space-between;padding:20px 18px 8px;gap:10px}.brand{display:flex;align-items:center;gap:12px}.logo{width:26px;height:26px;border:2px solid var(--muted);border-radius:9px;transform:rotate(24deg);display:grid;place-items:center}.logo:after{content:"";width:13px;height:13px;border:2px solid var(--muted);border-radius:5px}.stack{display:grid;gap:16px}.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}label{display:grid;gap:7px;font-size:13px}.notice{padding:12px 14px;background:var(--soft);border-radius:14px;font-size:13px;line-height:1.6}.primary{background:var(--action);color:var(--onaction)}.full{width:100%}.outline{border:1px solid var(--line);background:transparent}.tag{background:var(--soft);padding:5px 9px;border-radius:20px;font-size:11px}.set{display:grid;grid-template-columns:22px 1fr 1fr 1fr 28px;gap:7px;align-items:center;margin-top:8px}.set input{padding:9px 5px;text-align:center}.set button{padding:4px;background:transparent}.set-head{color:var(--muted);font-size:11px}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}.calendar button{height:38px;padding:0;background:transparent}.calendar .logged{background:var(--soft);font-weight:600}.calendar .chosen{background:var(--action);color:var(--onaction)}.calendar small{padding:6px 0}.tabs{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;padding:10px 8px calc(12px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line);z-index:2}.tabs button{background:transparent;display:grid;justify-items:center;gap:5px;color:var(--muted);font-size:12px;padding:7px 22px}.tabs button.active{background:var(--soft);color:var(--fg)}svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}main{padding:12px 18px 106px}#status{padding:8px 18px;font-size:13px;color:var(--muted);white-space:pre-wrap}.error{color:var(--fg)!important}.sheet{position:fixed;inset:0;background:#0006;z-index:5;display:flex;align-items:flex-end;padding-top:30px}.sheet-card{width:100%;max-height:90%;overflow-y:auto;padding:22px;background:var(--card);border-radius:26px 26px 0 0;display:grid;gap:14px;padding-bottom:calc(22px + env(safe-area-inset-bottom))}.sheet-card button{text-align:center}.empty{padding:24px 4px;text-align:center;display:grid;gap:12px}.spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--muted);border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin-right:7px}@keyframes spin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.spinner{animation:none}}
+.set .value-cell{width:100%;min-height:44px;padding:7px 3px;border:1px solid var(--line);border-radius:12px;background:var(--bg);font-weight:600}.set .value-cell.unset{color:var(--muted);font-weight:400}.stepper{display:grid;grid-template-columns:56px 1fr 56px;gap:10px;align-items:center}.stepper button{height:52px;font-size:24px}.stepper input{text-align:center;font-size:22px;font-weight:600}.quick-values{display:flex;gap:8px;flex-wrap:wrap}.quick-values button{border:1px solid var(--line)}
+</style></head><body>
+<header class="top"><div class="brand"><span class="logo" aria-hidden="true"></span><div><h3>训练记录</h3><small>当前项目的健身服务</small></div></div><button id="chat" aria-label="进入项目聊天">讨论计划 ↗</button></header>
+<div id="status" role="status" aria-live="polite">正在读取项目数据…</div><main id="content"></main><nav id="tabs" class="tabs" aria-label="模板页面" hidden></nav><div id="overlay"></div>
+<script>
+'use strict';
+const $=id=>document.getElementById(id), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dateKey=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+let TODAY=dateKey(new Date());const tomorrow=()=>{const d=new Date();d.setDate(d.getDate()+1);return dateKey(d)};
+function nextTrainingDate(recordDate){const d=new Date(recordDate+'T12:00:00');d.setDate(d.getDate()+1);const next=dateKey(d);return next<TODAY?TODAY:next}
+const pending=new Map();let profile=null,current={revision:0,key:null,data:null},draftRow=null,draft=null,draftRows=[],logs=[],allLogs=[],candidates=[],page='train',busy=false;
+let profileMode='choose',profileEntry=null,profileDialogue=[],profilePending='',intakeRow=null,intakeSaved='',intakeTimer=null,intakeQueue=Promise.resolve(),intakeId=crypto.randomUUID();
+const profileIds={heightCm:'height',weightKg:'weight',goal:'goal',split:'split',weeklyDays:'weekly',experience:'experience',equipment:'equipment',limitations:'limitations',estimatedLoads:'loads'};
+function emptyProfile(){return {heightCm:'',weightKg:'',goal:'增肌与力量',split:'3',weeklyDays:'3',experience:'',equipment:'',limitations:'',estimatedLoads:''}}
+function captureProfile(){if(profileMode==='form'&&$('height'))profileEntry=Object.fromEntries(Object.entries(profileIds).map(([k,id])=>[k,$(id).value]))}
+function profileTurns(){let turns=profileDialogue.slice(-24);while(turns.length>2&&JSON.stringify(turns).length>24000)turns=turns.slice(1);return turns}
+async function flushProfile(){clearTimeout(intakeTimer);intakeQueue=intakeQueue.catch(()=>{}).then(async()=>{if(!profileEntry)return;const snapshot=JSON.stringify({form:profileEntry,dialogue:profileTurns(),mode:profileMode,pending:profilePending});if(snapshot===intakeSaved)return;const r=intakeRow?await run('profile.draft_update',{key:intakeRow.key,expectedRevision:intakeRow.revision,data:JSON.parse(snapshot)}):await run('profile.draft_save',JSON.parse(snapshot),intakeId);intakeRow=r.data;intakeSaved=snapshot});return intakeQueue}
+function queueProfileSave(){clearTimeout(intakeTimer);intakeTimer=setTimeout(()=>flushProfile().catch(e=>status('资料草稿保存失败：'+e.message,true)),800)}
+let selectedDate=TODAY,month=new Date(new Date().getFullYear(),new Date().getMonth(),1),savedDraft='',draftSaveId=crypto.randomUUID(),saveTimer=null,saveQueue=Promise.resolve(),sheetDecision=null,targetDate=TODAY;
+function status(text,error=false){$('status').textContent=text;$('status').className=error?'error':''}
+function send(capability,input,requestId=crypto.randomUUID()){
+ return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{pending.delete(requestId);reject(Error('操作超时；输入可能已经保存，请刷新并查看运行记录，避免重复提交。'))},220000);pending.set(requestId,{resolve,reject,timer});
+ try{MutCube.postMessage(JSON.stringify({protocolVersion:2,requestId,capability,...(input?{input}:{})}))}catch(e){clearTimeout(timer);pending.delete(requestId);reject(e)}});
+}
+MutCube.onmessage=e=>{const reply=JSON.parse(e.data),p=pending.get(reply.requestId);if(!p)return;clearTimeout(p.timer);pending.delete(reply.requestId);reply.error?p.reject(Error(reply.error)):p.resolve(reply.result)};
+const run=(actionId,data={},id)=>send('action.run',{actionId,data},id);
+function disable(value){document.querySelectorAll('button,input,select,textarea').forEach(e=>e.disabled=value)}
+async function task(fn){if(busy)return;busy=true;disable(true);try{await fn()}catch(e){status(e.message,true)}finally{busy=false;disable(false)}}
+async function listAll(actionId){const rows=[],seen=new Set();let cursor={};for(;;){const r=(await run(actionId,cursor)).data;for(const row of r.records){if(seen.has(row.key))throw Error('历史分页重复，请刷新重试');seen.add(row.key);rows.push(row)}if(!r.next)break;const next=JSON.stringify(r.next);if(next===JSON.stringify(cursor))throw Error('历史分页没有进展');cursor=r.next}return rows}
+function effectiveTraining(rows){const dates=new Set();return [...rows].sort((a,b)=>b.updatedAt-a.updatedAt||b.key.localeCompare(a.key)).filter(row=>{if(dates.has(row.data.date))return false;dates.add(row.data.date);return true})}
+async function loadTraining(){allLogs=await listAll('training.list');logs=effectiveTraining(allLogs)}
+function validDate(s){if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return false;const d=new Date(s+'T12:00:00');return Number.isFinite(d.getTime())&&dateKey(d)===s}
+function validatePlan(p){
+ if(!p||typeof p.name!=='string'||!p.name.trim()||!validDate(p.targetDate)||!Array.isArray(p.exercises)||p.exercises.length<1||p.exercises.length>12)throw Error('候选计划不完整，请重新生成');
+ const ids=new Set();for(const a of p.exercises){if(!a.id||!a.name?.trim()||ids.has(a.id))throw Error('候选动作名称或标识不合法');ids.add(a.id);
+ if(!Number.isFinite(a.weightKg)||a.weightKg<0||a.weightKg>500||!Number.isInteger(a.sets)||a.sets<1||a.sets>12||!Number.isInteger(a.repsMin)||!Number.isInteger(a.repsMax)||a.repsMin<1||a.repsMax>100||a.repsMin>a.repsMax||!Number.isFinite(a.rirMin)||!Number.isFinite(a.rirMax)||a.rirMin<0||a.rirMax>10||a.rirMin>a.rirMax)throw Error('候选动作目标超出合理录入范围，请重新生成')}
+ return p;
+}
+function newDraft(){if(!current.data)return null;validatePlan(current.data);return {date:TODAY,planKey:current.key,plan:current.data,exercises:current.data.exercises.map(a=>({exerciseId:a.id,name:a.name,sets:Array.from({length:a.sets},()=>({weightKg:String(a.weightKg),reps:'',rir:''}))})),note:'',submitted:false}}
+function meaningful(d=draft){return !!d&&!d.submitted&&(!!d.note.trim()||d.exercises.length!==d.plan.exercises.length||d.exercises.some(a=>{const goal=d.plan.exercises.find(p=>p.id===a.exerciseId);return !goal||a.sets.length!==goal.sets||a.sets.some(s=>s.reps!==''||s.rir!==''||s.weightKg!==String(goal.weightKg))}))}
+async function flushDraft(){
+ clearTimeout(saveTimer);saveQueue=saveQueue.catch(()=>{}).then(async()=>{if(!draft)return;const snapshot=JSON.stringify(draft);if(snapshot===savedDraft)return;
+ const r=draftRow?await run('draft.update',{key:draftRow.key,expectedRevision:draftRow.revision,data:JSON.parse(snapshot)}):await run('draft.save',JSON.parse(snapshot),draftSaveId);
+ draftRow=r.data;savedDraft=snapshot;});return saveQueue;
+}
+async function useCurrentPlanDraft(){
+ await flushDraft();draftRows=await listAll('draft.list');
+ // A workout is already recorded for this date. Keep the newly confirmed plan,
+ // but defer its entry draft until the next day instead of creating a false
+ // same-day draft that recovery would immediately mark submitted.
+ if(logs.some(r=>r.data.date===TODAY)){draft=null;draftRow=null;savedDraft='';return}
+ const existing=draftRows.find(r=>!r.data.submitted&&r.data.date===TODAY&&r.data.planKey===current.key);
+ draftRow=existing??null;draft=existing?JSON.parse(JSON.stringify(existing.data)):newDraft();
+ savedDraft=existing?JSON.stringify(draft):'';
+ if(!existing){draftSaveId=crypto.randomUUID();await flushDraft();draftRows=await listAll('draft.list')}
+}
+function queueSave(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>flushDraft().then(()=>{if(!busy)status('草稿已保存')}).catch(e=>status('草稿保存失败，请勿离开：'+e.message,true)),800)}
+async function refresh(){
+ await flushDraft();const previousToday=TODAY;TODAY=dateKey(new Date());
+ if(selectedDate===previousToday)selectedDate=TODAY;if(targetDate===previousToday)targetDate=TODAY;
+ const p=(await run('profile.list')).data.records;profile=p[0]?.data??null;
+ const intake=(await run('profile.draft_list')).data.records;intakeRow=intake[0]??null;
+ if(!profile&&intakeRow){profileEntry=intakeRow.data.form;profileDialogue=intakeRow.data.dialogue;profileMode=intakeRow.data.mode;profilePending=intakeRow.data.pending;intakeSaved=JSON.stringify(intakeRow.data)}
+ current=(await run('plan.current')).data;if(current.data)validatePlan(current.data);
+ draftRows=await listAll('draft.list');draftRow=draftRows[0]??null;draft=draftRow?.data??null;savedDraft=draft?JSON.stringify(draft):'';
+ await loadTraining();candidates=await listAll('plan.list');
+ if(targetDate===TODAY&&logs.some(r=>r.data.date===TODAY))targetDate=tomorrow();
+ // An uncertain submission is recovered from the immutable record, not submitted a second time.
+ if(draft&&logs.some(r=>r.data.date===draft.date)&&!draft.submitted){draft.submitted=true;await flushDraft()}
+ if(!profile)page='profile';else if(page==='profile')page='train';
+ // A confirmed version is a one-day plan, not a repeating schedule. Once used in a
+ // submitted workout, reopening tomorrow must not silently turn it into a new draft.
+ if(draft&&!draft.submitted&&current.key&&logs.some(r=>r.data.planKey===current.key)&&draft.planKey===current.key&&!meaningful()){
+  draft=null;draftRow=null;savedDraft='';
+ }
+ if(!draft||draft.submitted){draft=logs.some(r=>r.data.date===TODAY||r.data.planKey===current.key)?null:newDraft();draftRow=null;savedDraft='';draftSaveId=crypto.randomUUID()}
+ render();status('已读取当前项目数据');
+}
+function icon(name){const paths={train:'M4 8v8M7 6v12M17 6v12M20 8v8M7 12h10',calendar:'M4 5h16v15H4zM8 3v4M16 3v4M4 10h16',mine:'M5 21v-3a7 7 0 0 1 14 0v3M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8'};return `<svg viewBox="0 0 24 24"><path d="${paths[name]}"/></svg>`}
+function render(){
+ $('content').innerHTML='';$('tabs').hidden=!profile;
+ $('tabs').innerHTML=profile?['train','calendar','mine'].map((p,i)=>`<button data-page="${p}" class="${page===p?'active':''}">${icon(p)}${['训练','记录','我的'][i]}</button>`).join(''):'';
+ if(page==='profile')renderProfile();if(page==='train')renderTrain();if(page==='calendar')renderCalendar();if(page==='mine')renderMine();if(busy)disable(true);
+}
+function renderProfile(){
+ if(!profileEntry)profileEntry=profile?Object.fromEntries(Object.keys(emptyProfile()).map(k=>[k,String(profile[k]??'')])):emptyProfile();
+ if(profileMode==='form'){renderProfileForm();return}
+ $('content').innerHTML=profileMode==='choose'?`<div class="stack"><h1>如何录入训练资料？</h1><p class="muted">填写或交流都可以，核对后才保存为正式资料。</p><div class="card stack"><h2>和 AI 交流</h2><p>自然描述你的情况，AI 整理已有信息并补问缺失项。</p><button id="startProfileAi" class="primary">和 AI 交流 · 推荐</button></div><button id="startProfileForm" class="outline">直接填写</button></div>`:`<div class="stack"><div class="row"><h1>和 AI 整理资料</h1><button id="startProfileForm" class="outline">切换填写</button></div><div class="notice">AI 可参考本项目已有会话。资料需核对，不会直接保存或改变计划。</div><div class="card stack">${profileDialogue.length?profileDialogue.map(t=>`<div><small>${t.role==='user'?'你':'AI'}</small><p>${esc(t.text)}</p></div>`).join(''):'<p>可以一次说完身高、体重、训练分化和偏好。不了解工作重量可以不填。</p>'}</div><label>补充你的情况<textarea id="profileInput" placeholder="例如：我身高190厘米，体重94公斤，每周练三天，希望三分化增肌。"></textarea></label><button id="sendProfileAi" class="primary">${profileDialogue.length?'继续交流':'整理资料'}</button><button id="reviewProfile" class="outline">核对并保存资料</button></div>`;
+ const toForm=()=>task(async()=>{await flushProfile();profileMode='form';render();await flushProfile()});
+ $('startProfileForm').onclick=toForm;if($('reviewProfile'))$('reviewProfile').onclick=toForm;
+ if($('startProfileAi'))$('startProfileAi').onclick=()=>task(async()=>{profileMode='ai';render();await flushProfile()});
+ if($('profileInput')){$('profileInput').value=profilePending;$('profileInput').oninput=()=>{profilePending=$('profileInput').value;queueProfileSave()}};
+ if($('sendProfileAi'))$('sendProfileAi').onclick=()=>task(async()=>{
+  const typed=$('profileInput').value.trim(),request=typed||(profileDialogue.at(-1)?.role==='user'?profileDialogue.at(-1).text:'');if(!request)throw Error('请先描述或补充你的情况');if(request.length>8000)throw Error('单次描述请控制在8000字以内');
+  if(typed)profileDialogue.push({role:'user',text:request});profilePending='';await flushProfile();render();status('AI 正在整理资料…');
+  const result=(await run('profile.assist',{request,form:profileEntry,dialogue:JSON.stringify(profileTurns())})).data;
+  const fields=result.fields;if(!fields||Object.keys(emptyProfile()).some(k=>typeof fields[k]!=='string'))throw Error('AI 返回的资料不完整，请重试或切换填写');
+  if(!['增肌与力量','保持体能','减脂与体能'].includes(fields.goal)||!['1','2','3','4','5'].includes(fields.split)||!['1','2','3','4','5','6'].includes(fields.weeklyDays))throw Error('AI 返回的分化或频率无效，请切换填写核对');
+  profileEntry=fields;profileDialogue.push({role:'assistant',text:result.reply});await flushProfile();render();status(result.ready?'资料已整理，请核对并保存':'请补充缺失资料，或切换填写');
+ });
+}
+function renderProfileForm(){const source=profileEntry??profile??emptyProfile(),p={...source,split:Number(source.split),weeklyDays:Number(source.weeklyDays)};
+ $('content').innerHTML=`<div class="stack"><div class="stack"><h1>${profile?'编辑基本信息':'先了解你的训练基础'}</h1><p class="muted">不需要测试极限重量。资料用于生成计划，不替代专业评估。</p></div><form id="profileForm" class="card stack"><div class="grid"><label>身高 · cm<input id="height" type="number" min="100" max="250" step="0.1" required value="${esc(p.heightCm)}"></label><label>体重 · kg<input id="weight" type="number" min="20" max="350" step="0.1" required value="${esc(p.weightKg)}"></label></div><label>训练目标<select id="goal">${['增肌与力量','保持体能','减脂与体能'].map(v=>`<option ${v===p.goal?'selected':''}>${v}</option>`).join('')}</select></label><div class="grid"><label>训练分化<select id="split">${[1,2,3,4,5].map(n=>`<option value="${n}" ${n===p.split?'selected':''}>${n===1?'全身训练':n+'分化'}</option>`).join('')}</select></label><label>每周训练天数<select id="weekly">${[1,2,3,4,5,6].map(n=>`<option ${n===p.weeklyDays?'selected':''}>${n}</option>`).join('')}</select></label></div><label>训练经验 · 选填<input id="experience" value="${esc(p.experience)}" placeholder="例如：训练半年，熟悉哑铃动作"></label><label>可用器械 · 选填<input id="equipment" value="${esc(p.equipment)}" placeholder="例如：健身房、哑铃、绳索"></label><label>动作限制与偏好 · 选填<textarea id="limitations" placeholder="例如：腿部暂不加重；避免腰部不适动作">${esc(p.limitations)}</textarea></label><label>熟悉动作的工作重量 · 选填<textarea id="loads" placeholder="推：哑铃卧推；拉：下拉或划船；蹲：高脚杯深蹲；髋铰链：罗马尼亚硬拉。可只填熟悉动作及重量。">${esc(p.estimatedLoads)}</textarea></label><small>哑铃按单只重量，其他动作说明重量口径。不知道可留空。</small><button class="primary full" type="submit">保存基本信息</button>${profile?'<button id="profileCancel" type="button">返回训练</button>':''}</form></div>`;
+ $('profileForm').onsubmit=e=>{e.preventDefault();return task(async()=>{const heightCm=Number($('height').value),weightKg=Number($('weight').value);if(heightCm<100||heightCm>250||weightKg<20||weightKg>350)throw Error('请填写有效身高和体重');const data={heightCm,weightKg,goal:$('goal').value,split:Number($('split').value),weeklyDays:Number($('weekly').value),experience:$('experience').value.trim(),equipment:$('equipment').value.trim(),limitations:$('limitations').value.trim(),estimatedLoads:$('loads').value.trim()};await run('profile.save',data);profile=data;page='train';render();status('基本信息已保存；已确认计划不会自动改变')})};
+ const form=$('profileForm');form.insertAdjacentHTML('afterbegin','<button id="profileToAi" type="button" class="outline">改用 AI 交流</button>');
+ $('profileToAi').onclick=()=>task(async()=>{captureProfile();await flushProfile();profileMode='ai';render();await flushProfile()});
+ form.addEventListener('input',()=>{captureProfile();queueProfileSave()});
+ form.addEventListener('submit',()=>{captureProfile();queueProfileSave()});
+ if($('profileCancel'))$('profileCancel').onclick=()=>task(async()=>{captureProfile();await flushProfile();page='train';render()});
+}
+function planText(a){return `${a.weightKg===0?'徒手':a.weightKg+' kg'} · ${a.sets} 组 × ${a.repsMin===a.repsMax?a.repsMin:a.repsMin+'–'+a.repsMax} 次 · RIR ${a.rirMin===a.rirMax?a.rirMin:a.rirMin+'–'+a.rirMax}`}
+function valueCell(a,i,j,k){const value=a.sets[j][k];return `<button type="button" class="value-cell${value===''?' unset':''}" data-edit-set="${i}:${j}:${k}" aria-label="${esc(a.name)} 第${j+1}组 ${k==='reps'?'实际次数':'实际 RIR'}，${value===''?'未填':esc(value)}">${value===''?'填写':esc(value)}</button>`}
+function setRows(a,i){return `<div class="set set-head"><span>组</span><span>kg</span><span>次数</span><span>RIR</span><span></span></div>`+a.sets.map((s,j)=>`<div class="set"><small>${j+1}</small><input type="number" inputmode="decimal" min="0" step="0.5" aria-label="${esc(a.name)} 第${j+1}组重量" data-field="${i}:${j}:weightKg" value="${esc(s.weightKg)}">${valueCell(a,i,j,'reps')}${valueCell(a,i,j,'rir')}<button data-remove="${i}:${j}" aria-label="删除第${j+1}组">×</button></div>`).join('')}
+function editSetValue(button){
+ const [i,j,k]=button.dataset.editSet.split(':'),a=draft?.exercises[i],set=a?.sets[j],goal=draft?.plan.exercises.find(p=>p.id===a?.exerciseId);if(!set||!goal)return;
+ const reps=k==='reps',min=reps?1:0,max=reps?200:10,step=reps?1:.5,initial=set[k]!==''?set[k]:String(reps?goal.repsMin:goal.rirMin);
+ const title=`${a.name} · 第${Number(j)+1}组${reps?'次数':'RIR'}`;
+ showSheet(`<h2>${esc(title)}</h2><small>目标：${reps?`${goal.repsMin}–${goal.repsMax} 次`:`RIR ${goal.rirMin}–${goal.rirMax}`}；未确认前不写入实际成绩。</small><div class="stepper"><button id="valueMinus" type="button" aria-label="减少">−</button><input id="setValue" type="number" inputmode="decimal" min="${min}" max="${max}" step="${step}" value="${esc(initial)}" aria-label="${esc(title)}"><button id="valuePlus" type="button" aria-label="增加">＋</button></div><small id="setValueError" class="error" role="alert"></small><div class="quick-values"><button id="useGoal" type="button">使用目标下限</button>${set[k]!==''?'<button id="clearValue" type="button">清空本格</button>':''}</div><button id="saveSetValue" class="primary" type="button">确认</button><button id="cancelSetValue" class="outline" type="button">取消</button>`);
+ const input=$('setValue'),goalValue=reps?goal.repsMin:goal.rirMin;
+ const valid=value=>Number.isFinite(value)&&value>=min&&value<=max&&(reps?Number.isInteger(value):Number.isInteger(value*2));
+ const adjust=delta=>{const value=Number(input.value);input.value=String(Math.max(min,Math.min(max,(valid(value)?value:goalValue)+delta)))};
+ $('valueMinus').onclick=()=>adjust(-step);$('valuePlus').onclick=()=>adjust(step);$('useGoal').onclick=()=>{input.value=String(goalValue)};
+ if($('clearValue'))$('clearValue').onclick=()=>{set[k]='';button.textContent='填写';button.classList.add('unset');button.setAttribute('aria-label',`${title}，未填`);queueSave();closeSheet()};
+ $('cancelSetValue').onclick=closeSheet;$('saveSetValue').onclick=()=>{const value=Number(input.value);if(input.value.trim()===''||!valid(value)){$('setValueError').textContent=`请输入 ${min}–${max}${reps?' 的整数':'，以 0.5 为单位'}`;return}set[k]=String(value);button.textContent=String(value);button.classList.remove('unset');button.setAttribute('aria-label',`${title}，${value}`);queueSave();closeSheet()};
+}
+function renderTrain(){
+ const todayLog=logs.find(r=>r.data.date===TODAY),activeDraft=draft&&!draft.submitted&&!logs.some(r=>r.data.date===draft.date)?draft:null;
+ const completedCurrent=!!current.key&&logs.some(r=>r.data.planKey===current.key);
+ const previousDraft=draftRows.find(r=>!r.data.submitted&&r.key!==draftRow?.key&&r.data.planKey!==current.key&&!logs.some(log=>log.data.date===r.data.date));
+ const freshCandidates=candidates.slice(0,1).filter(r=>r.key!==current.key);
+ let html=`<div class="stack"><div class="row"><h1>${activeDraft?esc(activeDraft.plan.name):todayLog?'今日训练已记录':completedCurrent?'等待下一次训练计划':current.data?esc(current.data.name):'开始你的训练'}</h1><button id="refresh">刷新</button></div>`;
+ if(current.data&&!completedCurrent)html+=`<div class="card stack"><div class="row"><h3>待执行计划</h3><span class="tag">版本 ${current.revision}</span></div><p>${esc(current.data.name)} · ${esc(current.data.targetDate)}</p><small>${esc(current.data.description)}</small>${todayLog?'<div class="notice">今天已有训练记录，这份新计划已启用，填写将在下一训练日开放。</div>':''}${activeDraft&&activeDraft.planKey!==current.key?'<div class="notice">下方正在填写的是旧计划草稿，已保留已填成绩；新计划已经启用。可切换到新计划填写，旧草稿仍保留。</div><button id="switchCurrentPlan" class="outline">改用已启用计划填写</button>':''}${previousDraft&&activeDraft?.planKey===current.key?`<button id="restorePreviousDraft" class="outline">恢复 ${esc(previousDraft.data.date)} 的旧计划草稿</button>`:''}</div>`;
+ else if(completedCurrent)html+='<div class="card stack"><h3>待执行计划</h3><p class="muted">暂无。上一份计划已完成，请启用新的计划候选。</p><small>已完成的训练可在“记录”中查看。</small></div>';
+ if(freshCandidates.length)html+=`<div class="card stack"><h3>最新计划候选</h3>${freshCandidates.map(r=>`<button data-preview="${esc(r.key)}" class="outline">${esc(r.data.name)} · ${esc(r.data.targetDate)} · 预览</button>`).join('')}<small>预览后点击启用即可使用；启用时检查源版本。</small></div>`;
+ if(!current.data)html+='<div class="card empty"><h2>还没有已确认计划</h2><p class="muted">资料已保存，生成一份计划，预览后再确认。</p></div>';
+ if(todayLog)html+='<div class="notice">今日实际记录已保存，不会重复提交或覆盖。可在“记录”查看，或生成下一次计划。</div>';
+ if(completedCurrent&&!activeDraft&&!todayLog)html+=`<div class="notice">上一份已启用计划已有实际训练记录，不会在今天自动重复。${freshCandidates.length?'请预览并启用上方的下一次计划，再填写训练记录。':'可以在下方生成下一次计划，预览并启用后再填写训练记录。'}</div>`;
+ if(completedCurrent&&activeDraft?.planKey===current.key)html+='<div class="notice">这份计划已有已提交的训练记录。下面显示的是你曾填写的草稿，不是自动安排的下一次训练；如需新计划，请先启用候选。草稿不会被自动删除。</div>';
+ if(activeDraft){if(activeDraft.planKey!==current.key)html+='<div class="notice">以下是保留的旧计划草稿，不代表当前已启用计划。</div>';
+ html+=`<div class="card stack"><label>实际训练日期<input id="trainingDate" type="date" max="${TODAY}" value="${esc(activeDraft.date)}"></label><small>每自然日一份记录；已提交历史不可覆盖。</small><p class="muted">${esc(activeDraft.plan.description)}</p><small>点击每组的次数或 RIR 填写；未确认前仍视为未填。上下滑动页面不会改变成绩。</small></div>`;
+ html+=activeDraft.exercises.map((a,i)=>{const goal=activeDraft.plan.exercises.find(p=>p.id===a.exerciseId);return `<section class="card stack"><div class="row"><h3>${esc(a.name)}</h3><button data-remove-exercise="${i}" class="outline" aria-label="从今天训练中移除${esc(a.name)}">移除动作</button></div><p>${esc(planText(goal))}</p>${goal.note?`<small>${esc(goal.note)}</small>`:''}<div id="sets-${i}">${setRows(a,i)}</div><button data-add="${i}" class="outline">＋ 添加实际组</button></section>`}).join('');
+ const removed=activeDraft.plan.exercises.filter(goal=>!activeDraft.exercises.some(a=>a.exerciseId===goal.id));
+ if(removed.length)html+=`<div class="card stack"><h3>今天已移除的动作</h3>${removed.map(goal=>`<button class="outline" data-restore-exercise="${esc(goal.id)}">恢复 ${esc(goal.name)}</button>`).join('')}</div>`;
+ html+=`<div class="card stack"><label>训练备注<textarea id="note" placeholder="记录感受、代偿或不适">${esc(activeDraft.note)}</textarea></label><small>重量可修改，主要填写每组实际次数与 RIR。空组请删除，不把未完成组记为已训练。</small><button id="submit" class="primary full">提交训练记录并生成下一次计划</button></div>`;
+ }
+ html+=`<div class="card stack"><h3>${current.data?'调整或生成下一次计划':'生成首份计划'}</h3><label>计划目标日期<input id="targetDate" type="date" value="${esc(targetDate)}"></label><label>补充要求<textarea id="request" placeholder="例如：今天不练腿，降低肩部负荷；下一次练背和二头"></textarea></label><button id="generate" class="${current.data?'outline':'primary'} full">${current.data?'生成计划候选 / 重试生成':'生成首份计划'}</button><small>提交的事实先保存；生成失败仅重试计划，不重新提交训练。</small></div></div>`;
+ $('content').innerHTML=html;$('refresh').onclick=()=>task(refresh);
+ if($('switchCurrentPlan'))$('switchCurrentPlan').onclick=()=>task(async()=>{await useCurrentPlanDraft();render();status('已切换至当前计划；旧草稿已保留，可从上方恢复')});
+ if($('restorePreviousDraft'))$('restorePreviousDraft').onclick=()=>task(async()=>{await flushDraft();draftRow=previousDraft;draft=JSON.parse(JSON.stringify(previousDraft.data));savedDraft='';await flushDraft();draftRows=await listAll('draft.list');render();status('已恢复旧计划草稿；当前已启用计划不变')});
+ $('generate').onclick=()=>task(async()=>{await flushDraft();targetDate=$('targetDate').value;await generate($('request').value.trim()||(!current.data?'根据基本信息生成首份保守训练计划':'根据实际完成情况和分化安排下一次训练，注意恢复与动作限制'))});
+ if(activeDraft){$('note').oninput=()=>{draft.note=$('note').value;queueSave()};$('trainingDate').onchange=()=>{const v=$('trainingDate').value;if(!validDate(v)||v>TODAY||logs.some(r=>r.data.date===v)){status('请选择不晚于今天且尚未提交的训练日期',true);$('trainingDate').value=draft.date;return}draft.date=v;queueSave()};$('submit').onclick=()=>task(submitTraining)}
+}
+async function generate(request){
+ if(!validDate(targetDate))throw Error('请选择有效的计划目标日期');await flushDraft();current=(await run('plan.current')).data;
+ const baseRevision=current.revision;status('正在生成计划候选，请稍候…');const r=await run('plan.generate',{request,baseRevision,targetDate});
+ current=(await run('plan.current')).data;candidates=await listAll('plan.list');render();
+ const stale=current.revision!==baseRevision;status(stale?'候选已保存，但当前计划在生成期间变化；请重新生成后再启用':'候选已保存，预览并确认后才启用',stale);preview({key:r.key,data:r.data,stale});
+}
+function actualTraining(){
+ if(!draft||draft.submitted)throw Error('没有可提交草稿');if(!validDate(draft.date)||draft.date>TODAY)throw Error('实际训练日期无效');validatePlan(draft.plan);
+ if(!draft.exercises.length)throw Error('请至少保留一个实际训练动作；若今天休息，请勿提交训练记录');
+ const exercises=draft.exercises.map(a=>({exerciseId:a.exerciseId,name:a.name,sets:a.sets.map(s=>{if(s.weightKg.trim()===''||s.reps.trim()===''||s.rir.trim()==='')throw Error('请填完每个实际组的重量、次数和 RIR；未完成组请删除');const weightKg=Number(s.weightKg),reps=Number(s.reps),rir=Number(s.rir);if(!Number.isFinite(weightKg)||weightKg<0||weightKg>500||!Number.isInteger(reps)||reps<1||reps>200||!Number.isFinite(rir)||rir<0||rir>10)throw Error('实际组数据无效，请检查重量、次数和 RIR');return {weightKg,reps,rir}})}));
+ return {date:draft.date,planKey:draft.planKey,plan:draft.plan,exercises,note:draft.note.trim()};
+}
+async function submitTraining(){
+ const data=actualTraining();if(logs.some(r=>r.data.date===data.date))throw Error('该日期已提交，不能覆盖历史');await flushDraft();
+ status('正在保存实际训练…');await run('training.submit',data,'training-'+data.date);
+ // Mark locally immediately: a later draft-save or AI failure must never enable a second submit.
+ draft.submitted=true;targetDate=nextTrainingDate(data.date);await loadTraining();render();status('实际训练已保存，正在生成下一次计划…');
+ await flushDraft();await generate('根据最近实际训练与当前计划安排下一次训练，遵守分化与恢复；保守渐进，尊重动作限制。');
+}
+function showSheet(html){$('overlay').innerHTML=`<div class="sheet"><section class="sheet-card" role="dialog" aria-modal="true">${html}</section></div>`;if(busy)disable(true)}
+function closeSheet(){if(sheetDecision){const resolve=sheetDecision;sheetDecision=null;resolve('cancel')}$('overlay').innerHTML=''}
+function preview(row){
+ let valid=true,message='';try{validatePlan(row.data)}catch(e){valid=false;message=e.message}
+ showSheet(`<h2>${esc(row.data.name||'计划候选')}</h2><small>${esc(row.data.targetDate)} · 候选尚未启用</small><p>${esc(row.data.description)}</p>${valid?row.data.exercises.map(a=>`<div class="card stack"><h3>${esc(a.name)}</h3><p>${esc(planText(a))}</p><small>${esc(a.note)}</small></div>`).join(''):`<p>${esc(message)}</p>`}${row.stale?'<p class="notice">当前计划在生成期间发生变化。候选已保留，但不能直接启用；请基于最新计划重新生成。</p>':''}${meaningful()?'<p class="notice">启用后当天填写页切换到新计划；已有实际输入作为旧草稿保留，可随时恢复，不自动迁移到新动作。</p>':''}${valid&&!row.stale?'<button id="confirmPlan" class="primary">启用计划</button>':''}<button id="closePreview" class="outline">暂不启用</button>`);
+ $('closePreview').onclick=closeSheet;if(valid&&!row.stale)$('confirmPlan').onclick=async()=>{
+  if(busy)return;await task(async()=>{await flushDraft();const keptOldDraft=meaningful();
+   current=(await run('plan.current')).data;const r=await run('plan.confirm',{key:row.key,expectedRevision:current.revision});
+   if(!r.data.confirmed){closeSheet();render();status('已取消，原计划与草稿保持不变');return}
+   current=(await run('plan.current')).data;await useCurrentPlanDraft();
+   closeSheet();render();status(!draft?'新计划已启用；今天已有训练记录，将在下一训练日开放填写':keptOldDraft?'新计划已启用并用于当天填写；旧草稿已保留，可恢复':'新计划已启用，重量与组数已预填，实际次数与 RIR 待录入');
+  });
+ };
+}
+function openTrainingVersions(date){
+ const versions=allLogs.filter(row=>row.data.date===date);
+ showSheet(`<h2>${esc(date)} · 历史版本</h2><p>原始记录和更正记录均保留；当前展示最新版本。</p>${versions.map((row,index)=>`<div class="card stack"><h3>${index===0?'当前版本':'旧版本 '+index}</h3><small>${esc(row.key)}</small>${row.data.exercises.map(a=>`<p>${esc(a.name)}：${a.sets.map(s=>`${s.weightKg} kg × ${s.reps} 次 / RIR ${s.rir}`).join('；')}</p>`).join('')}<p>${esc(row.data.note||'无备注')}</p></div>`).join('')}<button id="closeVersions" class="outline">关闭</button>`);
+ $('closeVersions').onclick=closeSheet;
+}
+function openCorrection(row){
+ const corrected=JSON.parse(JSON.stringify(row.data));
+ function draw(){
+  showSheet(`<h2>更正 ${esc(corrected.date)} 的训练</h2><p>更正会追加新版本，原始记录仍可查看。仅修改实际完成情况，不修改当时的计划快照。</p>${corrected.exercises.map((exercise,i)=>`<div class="card stack"><div class="row"><h3>${esc(exercise.name)}</h3><button data-correction-remove-exercise="${i}" class="outline">移除动作</button></div>${exercise.sets.map((set,j)=>`<div class="grid"><label>重量 kg<input data-correction="${i}:${j}:weightKg" type="number" step="0.5" value="${esc(set.weightKg)}"></label><label>次数<input data-correction="${i}:${j}:reps" type="number" step="1" value="${esc(set.reps)}"></label><label>RIR<input data-correction="${i}:${j}:rir" type="number" step="0.5" value="${esc(set.rir)}"></label><button data-correction-remove-set="${i}:${j}" class="outline">删除该组</button></div>`).join('')}<button data-correction-add-set="${i}" class="outline">添加一组</button></div>`).join('')}<label>备注<textarea id="correctionNote">${esc(corrected.note)}</textarea></label><button id="saveCorrection" class="primary">保存更正版本</button><button id="cancelCorrection" class="outline">取消</button>`);
+  document.querySelectorAll('[data-correction]').forEach(input=>input.oninput=()=>{const [i,j,k]=input.dataset.correction.split(':');corrected.exercises[i].sets[j][k]=input.value});
+  $('correctionNote').oninput=()=>{corrected.note=$('correctionNote').value};$('cancelCorrection').onclick=closeSheet;
+  document.querySelectorAll('[data-correction-remove-exercise]').forEach(button=>button.onclick=()=>{if(corrected.exercises.length<=1){status('至少保留一个动作',true);return}corrected.exercises.splice(Number(button.dataset.correctionRemoveExercise),1);draw()});
+  document.querySelectorAll('[data-correction-remove-set]').forEach(button=>button.onclick=()=>{const [i,j]=button.dataset.correctionRemoveSet.split(':').map(Number);if(corrected.exercises[i].sets.length<=1){status('至少保留一组',true);return}corrected.exercises[i].sets.splice(j,1);draw()});
+  document.querySelectorAll('[data-correction-add-set]').forEach(button=>button.onclick=()=>{const sets=corrected.exercises[Number(button.dataset.correctionAddSet)].sets;if(sets.length>=12){status('最多 12 组',true);return}sets.push({...sets.at(-1)});draw()});
+  $('saveCorrection').onclick=()=>task(async()=>{
+   if(!corrected.exercises.length)throw Error('请至少保留一个实际动作');
+   const result={...corrected,note:corrected.note.trim(),exercises:corrected.exercises.map(a=>({...a,sets:a.sets.map(s=>{const weightKg=Number(s.weightKg),reps=Number(s.reps),rir=Number(s.rir);if(String(s.weightKg).trim()===''||String(s.reps).trim()===''||String(s.rir).trim()===''||!Number.isFinite(weightKg)||weightKg<0||weightKg>500||!Number.isInteger(reps)||reps<1||reps>200||!Number.isFinite(rir)||rir<0||rir>10)throw Error('实际组数据无效，请检查重量、次数和 RIR');return {weightKg,reps,rir}})}))};
+   await run('training.submit',result,`training-${corrected.date}-correction-${crypto.randomUUID()}`);await loadTraining();closeSheet();renderCalendar();status('更正已保存，原记录仍在历史版本中；如需调整下次计划，请重新生成候选。');
+  });
+ }
+ draw();
+}
+function renderCalendar(){const y=month.getFullYear(),m=month.getMonth(),start=(new Date(y,m,1).getDay()+6)%7,days=new Date(y,m+1,0).getDate();
+ const dates=new Set(logs.map(r=>r.data.date)),rows=logs.filter(r=>r.data.date===selectedDate);
+ $('content').innerHTML=`<div class="stack"><h1>训练记录</h1><div class="card stack"><div class="row"><button id="prevMonth" aria-label="上个月">‹</button><h3>${y} 年 ${m+1} 月</h3><button id="nextMonth" aria-label="下个月">›</button></div><div class="calendar">${['一','二','三','四','五','六','日'].map(s=>`<small>${s}</small>`).join('')}${'<span></span>'.repeat(start)}${Array.from({length:days},(_,i)=>{const d=dateKey(new Date(y,m,i+1));return `<button data-date="${d}" class="${dates.has(d)?'logged ':''}${d===selectedDate?'chosen':''}" aria-label="${d}${dates.has(d)?' 有训练':''}">${i+1}</button>`}).join('')}</div><small>底色标记已提交训练，共 ${logs.length} 次。草稿不计入。</small></div><h3>${esc(selectedDate)}</h3>${rows.length?rows.map(r=>`<div class="card stack"><h3>${esc(r.data.plan.name)}</h3>${r.data.exercises.map(a=>`<div><h3>${esc(a.name)}</h3><p class="muted">${a.sets.map((s,i)=>`第 ${i+1} 组：${s.weightKg} kg × ${s.reps} 次 · RIR ${s.rir}`).join('\n')}</p></div>`).join('')}<p>${esc(r.data.note||'无备注')}</p><small>实际记录不可由 AI 覆盖或删除。</small></div>`).join(''):'<div class="card empty"><p class="muted">当天没有已提交训练</p></div>'}</div>`;
+ const recordCards=document.querySelectorAll('#content > .stack > .card');rows.forEach((row,index)=>{const card=recordCards[index+1];if(!card)return;const count=allLogs.filter(item=>item.data.date===row.data.date).length;const controls=document.createElement('div');controls.className='row';const correct=document.createElement('button');correct.className='outline';correct.textContent='更正记录';correct.onclick=()=>openCorrection(row);controls.append(correct);if(count>1){const history=document.createElement('button');history.className='outline';history.textContent=`查看 ${count} 个历史版本`;history.onclick=()=>openTrainingVersions(row.data.date);controls.append(history)}card.append(controls)});
+ $('prevMonth').onclick=()=>{month=new Date(y,m-1,1);renderCalendar()};$('nextMonth').onclick=()=>{month=new Date(y,m+1,1);renderCalendar()};
+}
+function renderMine(){
+ const completedCurrent=!!current.key&&logs.some(r=>r.data.planKey===current.key);
+ $('content').innerHTML=`<div class="stack"><h1>我的训练</h1><div class="card stack"><h3>基本信息</h3><p>${profile.heightCm} cm · ${profile.weightKg} kg\n${esc(profile.goal)} · ${profile.split} 分化 · 每周 ${profile.weeklyDays} 天</p><p class="muted">${esc(profile.limitations||'暂无动作限制')}</p><button id="editProfile" class="outline">编辑基本信息</button></div><div class="card stack"><h3>计划与数据</h3><p class="muted">训练记录 ${logs.length} 份\n待执行计划：${completedCurrent?'暂无':esc(current.data?.name??'暂无')}\n${completedCurrent?`上一份已完成：${esc(current.data.name)}\n`:''}修改资料不自动覆盖计划，调整需生成候选并确认。</p><button id="discuss">进入项目聊天讨论</button><small>运行记录、数据导出、授权撤销由宿主菜单提供。</small></div></div>`;
+ $('editProfile').onclick=()=>task(async()=>{await flushDraft();profileEntry=Object.fromEntries(Object.keys(emptyProfile()).map(k=>[k,String(profile[k]??'')]));profileMode='form';page='profile';render()});$('discuss').onclick=openChat;
+}
+async function openChat(){if(busy)return;return task(async()=>{await flushDraft();await send('navigation.openChat')})}
+window.MutCubeBeforeLeave=async()=>{
+ if(busy){status('操作进行中，请等待完成再离开');return false}
+ try{if(page==='profile'){captureProfile();await flushProfile()}await flushDraft();return true}catch(e){status('草稿保存失败，页面已保留：'+e.message,true);return false}
+};
+$('chat').onclick=async()=>{if(await window.MutCubeBeforeLeave())return openChat()};
+$('content').addEventListener('input',e=>{if(!e.target.dataset.field||!draft)return;const [i,j,k]=e.target.dataset.field.split(':');draft.exercises[i].sets[j][k]=e.target.value;queueSave()});
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||busy)return;
+ if(b.dataset.editSet){editSetValue(b);return}
+ if(b.dataset.page)(async()=>{if(page==='profile'&&!await window.MutCubeBeforeLeave())return;return task(async()=>{await flushDraft();page=b.dataset.page;render()})})();
+ if(b.dataset.date){selectedDate=b.dataset.date;renderCalendar()}
+ if(b.dataset.preview){const row=candidates.find(r=>r.key===b.dataset.preview);if(row)preview(row)}
+ if(b.dataset.add!==undefined&&draft){const i=Number(b.dataset.add),a=draft.exercises[i],goal=draft.plan.exercises.find(p=>p.id===a.exerciseId);if(a.sets.length>=12){status('最多录入 12 个实际组');return}a.sets.push({weightKg:String(goal.weightKg),reps:'',rir:''});$('sets-'+i).innerHTML=setRows(a,i);queueSave()}
+ if(b.dataset.remove&&draft){const [i,j]=b.dataset.remove.split(':').map(Number),a=draft.exercises[i];if(a.sets.length<=1){status('至少保留一个实际组');return}a.sets.splice(j,1);$('sets-'+i).innerHTML=setRows(a,i);queueSave()}
+ if(b.dataset.removeExercise!==undefined&&draft){const i=Number(b.dataset.removeExercise),a=draft.exercises[i];if(!a)return;showSheet(`<h2>移除今天的${esc(a.name)}？</h2><p>仅从今天的实际训练草稿中移除，不修改已启用计划或历史记录。可以在提交前恢复。</p><button id="confirmRemoveExercise" class="primary">移除动作</button><button id="cancelRemoveExercise" class="outline">取消</button>`);$('cancelRemoveExercise').onclick=closeSheet;$('confirmRemoveExercise').onclick=()=>task(async()=>{draft.exercises.splice(i,1);await flushDraft();closeSheet();render();status('已从今天草稿移除动作；可在提交前恢复')})}
+ if(b.dataset.restoreExercise!==undefined&&draft){const goal=draft.plan.exercises.find(p=>p.id===b.dataset.restoreExercise);if(!goal||draft.exercises.some(a=>a.exerciseId===goal.id))return;const index=draft.plan.exercises.findIndex(p=>p.id===goal.id),insertAt=draft.exercises.findIndex(a=>draft.plan.exercises.findIndex(p=>p.id===a.exerciseId)>index);draft.exercises.splice(insertAt<0?draft.exercises.length:insertAt,0,{exerciseId:goal.id,name:goal.name,sets:Array.from({length:goal.sets},()=>({weightKg:String(goal.weightKg),reps:'',rir:''}))});task(async()=>{await flushDraft();render();status('动作已恢复，实际次数与 RIR 待填写')})}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!busy)closeSheet()});
+let launchReady=false;
+async function openLaunchTarget(){const target=window.MutCubeLaunchTarget;if(!launchReady||busy||!target)return;window.MutCubeLaunchTarget=null;
+ await task(async()=>{if(target.collection==='plans'){page='train';render();if(target.recordKey){const rows=await listAll('plan.list'),row=rows.find(r=>r.key===target.recordKey);if(row)preview(row);else status('对应计划已不存在，请查看当前计划或运行记录',true)}}else if(target.collection==='training'){page='calendar';render()}else if(target.collection==='profiles'){page=profile?'mine':'profile';render()}})
+}
+window.addEventListener('mutcube:open-record',openLaunchTarget);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&TODAY!==dateKey(new Date())&&!busy)task(refresh)});
+task(refresh).then(()=>{launchReady=true;return openLaunchTarget()});
+</script></body></html>

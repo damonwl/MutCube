@@ -1,0 +1,282 @@
+#!/usr/bin/env python3
+"""MutCube Template Package v1 developer CLI (Python standard library only)."""
+import argparse
+import hashlib
+import json
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import zipfile
+
+ROOT = Path(__file__).resolve().parent.parent
+MAX_FILES = 128
+MAX_FILE = 2 * 1024 * 1024
+MAX_PACKAGE = 12 * 1024 * 1024
+
+
+def package_files(source: Path):
+    result = {}
+    total = 0
+    for path in sorted(source.rglob("*")):
+        if path.is_symlink():
+            raise ValueError(f"符号链接不可打包: {path}")
+        if not path.is_file() or path.name == ".DS_Store":
+            continue
+        relative = path.relative_to(source).as_posix()
+        if relative == "manifest.json":
+            continue
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_./-]{0,199}", relative) or any(
+            part in ("", ".", "..") for part in relative.split("/")
+        ):
+            raise ValueError(f"资源路径无效: {relative}")
+        if not (relative.startswith(("templates/", "assets/", "schemas/", "skills/")) or relative == "README.md"):
+            raise ValueError(f"未声明的资源目录: {relative}")
+        data = path.read_bytes()
+        if len(data) > MAX_FILE:
+            raise ValueError(f"单文件超出 2 MB: {relative}")
+        total += len(data)
+        if total > MAX_PACKAGE or len(result) >= MAX_FILES:
+            raise ValueError("模板包超出总大小或文件数量上限")
+        result[relative] = data
+    for name, source in {"assets/mutcube-sdk.js": "index.js", "assets/mock-host.js": "mock-host.js"}.items():
+        if name not in result:
+            data = (ROOT / "template-sdk/src" / source).read_bytes()
+            if len(data) > MAX_FILE or total + len(data) > MAX_PACKAGE or len(result) >= MAX_FILES:
+                raise ValueError("注入 SDK 后超出包大小或文件数限制")
+            result[name] = data
+            total += len(data)
+    return result
+
+
+def normalized_manifest(source: Path):
+    manifest = json.loads((source / "manifest.json").read_text(encoding="utf-8"))
+    if not isinstance(manifest, dict):
+        raise ValueError("Manifest 根节点必须是对象")
+    if set(manifest) != {"packageVersion", "minHostVersion", "developer", "permissions", "networkDomains", "resources", "template"}:
+        raise ValueError("Package v1 Manifest 字段不匹配")
+    if not isinstance(manifest["template"], dict):
+        raise ValueError("template 必须是对象")
+    if manifest["packageVersion"] != 1 or manifest["template"].get("protocolVersion") != 2:
+        raise ValueError("仅支持 Package v1 + Action 协议 2")
+    template = manifest["template"]
+    if set(template) != {"protocolVersion", "id", "version", "name", "entry", "collections", "actions", "capabilities"}:
+        raise ValueError("模板协议字段不匹配")
+    files = package_files(source)
+    if not re.fullmatch(r"[a-z][a-z0-9_.-]{0,79}", template["id"]):
+        raise ValueError("模板 ID 无效")
+    bounded_version = r"[0-9]{1,9}\.[0-9]{1,9}\.[0-9]{1,9}"
+    if not re.fullmatch(bounded_version, template["version"]) or not re.fullmatch(bounded_version, manifest["minHostVersion"]):
+        raise ValueError("版本号必须使用 x.y.z，每段最多 9 位数字")
+    if not re.fullmatch(r"templates/[a-z0-9-]+/index\.html", template["entry"]):
+        raise ValueError("入口文件必须为 templates/<slug>/index.html")
+    page_prefix = template["entry"].rsplit("/", 1)[0] + "/"
+    if any(name.startswith("templates/") and not name.startswith(page_prefix) for name in files):
+        raise ValueError("包中存在其他模板页面目录")
+    if not isinstance(manifest["developer"], dict) or not manifest["developer"].get("name"):
+        raise ValueError("需要声明开发者名称")
+    if set(manifest["developer"]) - {"name", "website", "license"}:
+        raise ValueError("开发者字段无效")
+    if "license" in manifest["developer"] and not re.fullmatch(r"[A-Za-z0-9.+-]{1,50}", manifest["developer"]["license"]):
+        raise ValueError("许可标识无效")
+    if not isinstance(manifest["permissions"], list) or len(manifest["permissions"]) != len(set(manifest["permissions"])):
+        raise ValueError("权限声明必须为不重复的列表")
+    if not isinstance(manifest["networkDomains"], list) or len(manifest["networkDomains"]) != len(set(manifest["networkDomains"])):
+        raise ValueError("网络域名必须为不重复的列表")
+    if len(manifest["networkDomains"]) > 10:
+        raise ValueError("网络域名最多 10 个")
+    if template["entry"] not in files:
+        raise ValueError("入口页面不存在")
+    page = files[template["entry"]].decode("utf-8")
+    if re.search(r"<script\b(?![^>]*\bsrc\s*=)[^>]*>", page, re.IGNORECASE):
+        raise ValueError("入口页面包含内联脚本；模板 WebView 的 CSP 只允许加载本地脚本文件")
+    if not isinstance(template["capabilities"], list) or "action.run" not in template["capabilities"] or \
+            not set(template["capabilities"]) <= {"action.run", "navigation.openChat", "navigation.close"}:
+        raise ValueError("模板桥接能力声明无效")
+    if not isinstance(template["collections"], list) or not 1 <= len(template["collections"]) <= 30 or \
+            not isinstance(template["actions"], list) or not 1 <= len(template["actions"]) <= 50:
+        raise ValueError("集合需要 1–30 个，Action 需要 1–50 个")
+    known = {"host.permissions", "project.info", "ai.generate", "data.records", "ui.theme", "ui.notice", "ui.confirm", "navigation.openChat", "file.pick", "media.image.pick", "clipboard.read", "network.fetch", "speech.speak", "speech.recognize"}
+    if not set(manifest["permissions"]) <= known:
+        raise ValueError("存在未支持的宿主能力")
+    if any(permission.startswith("speech.") for permission in manifest["permissions"]) and tuple(map(int, manifest["minHostVersion"].split("."))) < (0, 1, 3):
+        raise ValueError("语音能力要求 MutCube 0.1.3 或更新版本")
+    if "data.records" not in manifest["permissions"]:
+        raise ValueError("需要 data.records 能力")
+    if any(action["mode"] == "GENERATE" for action in template["actions"]) and "ai.generate" not in manifest["permissions"]:
+        raise ValueError("GENERATE Action 需要 ai.generate 能力")
+    if manifest["networkDomains"] and "network.fetch" not in manifest["permissions"]:
+        raise ValueError("域名声明需要 network.fetch 能力")
+    domain_label = r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
+    if any(not isinstance(domain, str) or len(domain) > 253 or len(domain.split(".")) < 2 or
+           not re.search(r"[a-z]", domain.split(".")[-1]) or
+           any(not re.fullmatch(domain_label, label) for label in domain.split("."))
+           for domain in manifest["networkDomains"]):
+        raise ValueError("网络域名无效")
+    manifest["resources"] = {name: hashlib.sha256(data).hexdigest() for name, data in files.items()}
+    return manifest, files
+
+
+def cmd_init(destination: Path, template_id=None, developer=None):
+    if destination.exists():
+        raise ValueError("目标目录已存在")
+    if template_id is not None and not re.fullmatch(r"[a-z][a-z0-9_.-]{0,79}", template_id):
+        raise ValueError("模板 ID 无效")
+    if developer is not None and (not developer.strip() or len(developer) > 120):
+        raise ValueError("开发者名称无效")
+    shutil.copytree(ROOT / "template-sdk/examples/english-reader", destination)
+    if template_id is not None or developer is not None:
+        manifest_path = destination / "manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if template_id is not None:
+            manifest["template"]["id"] = template_id
+        if developer is not None:
+            manifest["developer"]["name"] = developer.strip()
+        manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    assets = destination / "assets"
+    assets.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(ROOT / "template-sdk/src/index.js", assets / "mutcube-sdk.js")
+    shutil.copy2(ROOT / "template-sdk/src/mock-host.js", assets / "mock-host.js")
+    print(f"已创建 {destination}；修改 manifest.json 后运行 validate 和 pack。")
+
+
+def cmd_validate(source: Path):
+    manifest, files = normalized_manifest(source)
+    print(f"校验通过：{manifest['template']['id']} v{manifest['template']['version']}，{len(files)} 个资源。")
+
+
+def cmd_pack(source: Path, output: Path):
+    manifest, files = normalized_manifest(source)
+    if output.exists():
+        raise ValueError("输出文件已存在，请指定新的文件名")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with zipfile.ZipFile(output, "x", compression=zipfile.ZIP_DEFLATED) as archive:
+            entries = {"manifest.json": (json.dumps(manifest, ensure_ascii=False, separators=(",", ":")) + "\n").encode(), **files}
+            for name, content in sorted(entries.items()):
+                info = zipfile.ZipInfo(name, date_time=(2026, 1, 1, 0, 0, 0))
+                info.compress_type = zipfile.ZIP_DEFLATED
+                info.external_attr = 0o100644 << 16
+                archive.writestr(info, content)
+    except Exception:
+        output.unlink(missing_ok=True)
+        raise
+    print(f"已生成 {output}")
+
+
+def schema_type(schema):
+    """Emit the supported JSON Schema subset as a TypeScript type."""
+    if not isinstance(schema, dict):
+        return "unknown"
+    if "enum" in schema and isinstance(schema["enum"], list) and schema["enum"]:
+        return " | ".join(json.dumps(item, ensure_ascii=False) for item in schema["enum"])
+    kind = schema.get("type")
+    if isinstance(kind, list):
+        return " | ".join(schema_type({**schema, "type": part}) for part in kind)
+    if kind == "object":
+        properties = schema.get("properties", {})
+        if not isinstance(properties, dict):
+            return "Record<string, unknown>"
+        required = set(schema.get("required", []))
+        fields = [f"{json.dumps(key, ensure_ascii=False)}{' ' if key in required else '?'}: {schema_type(value)};"
+                  for key, value in properties.items()]
+        if schema.get("additionalProperties") is not False:
+            return "Record<string, unknown>" if not fields else "{ " + " ".join(fields) + " }"
+        return "{ " + " ".join(fields) + " }"
+    if kind == "array":
+        return f"Array<{schema_type(schema.get('items', {}))}>"
+    return {"string": "string", "number": "number", "integer": "number", "boolean": "boolean", "null": "null"}.get(kind, "unknown")
+
+
+def cmd_types(source: Path, output: Path):
+    manifest, _ = normalized_manifest(source)
+    if output.exists():
+        raise ValueError("类型输出文件已存在，请指定新的文件名")
+    collections = {item["id"]: item["schema"] for item in manifest["template"]["collections"]}
+    lines = ["// Generated by mutcube-template types. Do not edit by hand.",
+             "export interface TemplateActions {"]
+    for action in manifest["template"]["actions"]:
+        collection_type = schema_type(collections[action["collection"]])
+        row = f"{{ key: string; revision: number; updatedAt: number; data: {collection_type} }}"
+        mode = action["mode"]
+        output_type = {
+            "LIST": f"{{ records: Array<{row}>; next: {{ beforeTime: number; beforeKey: string }} | null }}",
+            "CURRENT": f"{{ revision: number; key: string | null; data: {collection_type} | null }}",
+            "APPEND": row, "UPDATE": row,
+            "DELETE": "{ confirmed: true }",
+            "SELECT_VERSION": "{ confirmed: true; key: string; revision: number }",
+            "GENERATE": "unknown",
+        }.get(mode, "unknown")
+        lines.append(f"  {json.dumps(action['id'], ensure_ascii=False)}: {{")
+        lines.append(f"    input: {schema_type(action['inputSchema'])};")
+        lines.append(f"    output: {output_type};")
+        lines.append("  };")
+    lines.append("}")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"已生成 {output}；GENERATE 的模型输出仍为 unknown，使用前请运行时校验。")
+
+
+def cmd_example_fitness(destination: Path):
+    if destination.exists():
+        raise ValueError("目标目录已存在")
+    with tempfile.TemporaryDirectory(prefix="mutcube-fitness-export-") as temporary:
+        exported = Path(temporary) / "fitness-manifest.json"
+        subprocess.run([str(ROOT / "gradlew"), ":template:builtin:testDebugUnitTest",
+                        f"-PfitnessExportPath={exported}", "--no-configuration-cache", "-q"],
+                       cwd=ROOT, check=True)
+        template = json.loads(exported.read_text(encoding="utf-8"))
+        template["id"] = "example.fitness"
+        template["version"] = "2.1.1"
+        template["name"] = "训练记录（第三方示例）"
+        manifest = {
+            "packageVersion": 1,
+            "minHostVersion": "0.1.2",
+            "developer": {"name": "MutCube 示例团队", "license": "MIT"},
+            "permissions": ["data.records", "ai.generate", "navigation.openChat"],
+            "networkDomains": [],
+            "resources": {},
+            "template": template,
+        }
+        page = destination / "templates/fitness"
+        page.mkdir(parents=True)
+        source_page = (ROOT / "app/src/main/assets/templates/fitness/index.html").read_text(encoding="utf-8")
+        before, tag, remainder = source_page.partition("<script>")
+        script, closing, after = remainder.partition("</script>")
+        if not tag or not closing or "<script" in after.lower():
+            raise ValueError("内置训练页面脚本结构已变化，请更新示例导出器")
+        (page / "index.html").write_text(before + '<script src="app.js"></script>' + after, encoding="utf-8")
+        (page / "app.js").write_text(script, encoding="utf-8")
+        (destination / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        (destination / "README.md").write_text("# 训练记录第三方示例\n\n从当前内置模板的真实 Action 声明与页面导出；ID 改为 example.fitness，不共享内置模板数据。使用 pack 生成可导入包。\n", encoding="utf-8")
+    cmd_validate(destination)
+    print(f"已导出 {destination}；可继续使用 pack 打包。")
+
+
+def main():
+    parser = argparse.ArgumentParser(prog="mutcube-template")
+    sub = parser.add_subparsers(dest="command", required=True)
+    for command in ("init", "validate", "pack", "types", "example-fitness"):
+        action = sub.add_parser(command)
+        action.add_argument("source", type=Path)
+        if command == "init":
+            action.add_argument("--id", dest="template_id")
+            action.add_argument("--developer")
+        if command in ("pack", "types"):
+            action.add_argument("output", type=Path)
+    args = parser.parse_args()
+    try:
+        if args.command == "init": cmd_init(args.source, args.template_id, args.developer)
+        elif args.command == "validate": cmd_validate(args.source)
+        elif args.command == "pack": cmd_pack(args.source, args.output)
+        elif args.command == "types": cmd_types(args.source, args.output)
+        else: cmd_example_fitness(args.source)
+    except (ValueError, TypeError, KeyError, OSError, UnicodeDecodeError, json.JSONDecodeError,
+            subprocess.CalledProcessError) as error:
+        parser.exit(2, f"模板工具错误：{error}\n")
+
+
+if __name__ == "__main__":
+    main()

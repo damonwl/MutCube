@@ -1,0 +1,23 @@
+.fitness-profile {
+  display: grid;
+  gap: 14px;
+  --van-primary-color: var(--action, #171717);
+  --van-background: var(--bg, #f7f7f5);
+  --van-background-2: var(--card, #fff);
+  --van-text-color: var(--fg, #171715);
+  --van-text-color-2: var(--muted, #777772);
+  --van-cell-background: var(--card, #fff);
+  --van-field-input-text-color: var(--fg, #171715);
+  --van-button-primary-color: var(--onaction, #fff);
+  --van-button-primary-background: var(--action, #171717);
+  --van-button-primary-border-color: var(--action, #171717);
+  --van-radio-checked-icon-color: var(--action, #171717);
+}
+.fitness-profile .van-cell-group--inset { margin: 0; border-radius: 18px; overflow: hidden; }
+.fitness-profile .van-field__label { width: 7em; }
+.fitness-profile .van-button { border-radius: 12px; }
+.fitness-profile .switch-button { background: var(--card, #fff); }
+.fitness-profile .profile-options { background: var(--card, #fff); border-radius: 18px; padding: 15px; }
+.fitness-profile .profile-options h3 { margin-bottom: 13px; }
+.fitness-profile .van-radio-group { display: grid; gap: 12px; }
+.fitness-profile .profile-help { color: var(--muted, #777772); font-size: 12px; }

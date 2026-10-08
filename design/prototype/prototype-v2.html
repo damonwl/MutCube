@@ -1,0 +1,1177 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MutCube 完整交互原型</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f7f7f5;
+      --surface: #fff;
+      --soft: #efefec;
+      --soft-2: #e8e8e4;
+      --ink: #171715;
+      --muted: #777772;
+      --line: #e3e3de;
+      --accent: #171715;
+      --accent-ink: #fff;
+      --danger: #c7463a;
+      --success: #2e7d57;
+      --template: #6659c7;
+      font-family: "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px 12px 28px;
+      color: var(--ink);
+      background: #ecece9;
+    }
+    button, textarea, input { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    [hidden] { display: none !important; }
+
+    .prototype {
+      display: grid;
+      justify-items: center;
+      gap: 14px;
+    }
+    .phone {
+      position: relative;
+      width: min(390px, 100%);
+      height: min(844px, calc(100vh - 92px));
+      min-height: 680px;
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,.08);
+      border-radius: 38px;
+      background: var(--page);
+      box-shadow: 0 24px 70px rgba(20,20,20,.13);
+      isolation: isolate;
+    }
+
+    .statusbar {
+      position: absolute;
+      z-index: 12;
+      inset: 0 0 auto;
+      display: flex;
+      height: 38px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 24px 0;
+      font-size: 12px;
+      font-weight: 600;
+      pointer-events: none;
+    }
+    .status-icons { letter-spacing: 2px; }
+    .topbar {
+      position: absolute;
+      z-index: 5;
+      inset: 38px 0 auto;
+      display: grid;
+      grid-template-columns: 44px 1fr 44px;
+      align-items: center;
+      gap: 18px;
+      padding: 10px 16px 12px;
+      background: color-mix(in srgb, var(--page) 92%, transparent);
+      backdrop-filter: blur(18px);
+    }
+    .icon-button {
+      display: inline-grid;
+      width: 40px;
+      height: 40px;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: var(--surface);
+    }
+    .icon-button:hover, .icon-button:focus-visible { background: var(--soft-2); }
+    .icon { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+    .switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      max-width: 220px;
+      width: 100%;
+      justify-self: center;
+      padding: 3px;
+      border-radius: 23px;
+      background: var(--soft);
+    }
+    .switch button {
+      min-height: 38px;
+      border: 0;
+      border-radius: 20px;
+      background: transparent;
+      color: var(--muted);
+      transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+    }
+    .switch button.active { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+
+    .stage {
+      height: 100%;
+      padding: 112px 18px 96px;
+      overflow: hidden;
+    }
+    .empty {
+      display: grid;
+      height: 100%;
+      place-content: center;
+      justify-items: center;
+      padding-bottom: 82px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .cube-mark {
+      position: relative;
+      width: 42px;
+      height: 42px;
+      margin-bottom: 16px;
+      transform: rotate(30deg) skew(-4deg, -4deg);
+      border: 1.5px solid color-mix(in srgb, var(--ink) 28%, transparent);
+      border-radius: 12px;
+    }
+    .cube-mark::after {
+      position: absolute;
+      inset: 9px;
+      border: 1.5px solid color-mix(in srgb, var(--ink) 18%, transparent);
+      border-radius: 7px;
+      content: "";
+    }
+    .empty h1 { margin: 0; color: var(--ink); font-size: 19px; font-weight: 600; }
+    .empty p { margin: 7px 0 0; font-size: 13px; }
+
+    .messages {
+      display: flex;
+      height: 100%;
+      flex-direction: column;
+      gap: 18px;
+      overflow-y: auto;
+      padding: 8px 4px 24px;
+      scrollbar-width: none;
+    }
+    .messages::-webkit-scrollbar { display: none; }
+    .user-message {
+      align-self: flex-end;
+      max-width: 83%;
+      padding: 11px 15px;
+      border-radius: 19px 19px 6px 19px;
+      background: var(--accent);
+      color: var(--accent-ink);
+      line-height: 1.55;
+    }
+    .assistant-message { align-self: stretch; line-height: 1.66; }
+    .assistant-message p { margin: 0 0 10px; }
+    .assistant-message strong { font-weight: 650; }
+    .cursor { display: inline-block; width: 2px; height: 1em; margin-left: 2px; background: var(--ink); vertical-align: -2px; animation: blink 1s infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    .message-actions { display: flex; align-items: center; gap: 3px; margin-top: 4px; color: var(--muted); }
+    .message-actions button { display: grid; width: 34px; height: 34px; place-items: center; border: 0; border-radius: 50%; background: transparent; color: inherit; }
+    .message-actions button:hover { background: var(--soft); color: var(--ink); }
+    .token-line { margin-top: 1px; color: #a1a19d; font-size: 11px; }
+    .error-card {
+      padding: 14px;
+      border: 1px solid color-mix(in srgb, var(--danger) 24%, var(--line));
+      border-radius: 18px;
+      background: color-mix(in srgb, var(--danger) 6%, var(--surface));
+    }
+    .error-title { display: flex; align-items: center; gap: 8px; color: var(--danger); font-weight: 650; }
+    .error-card p { margin: 7px 0 12px; color: var(--muted); font-size: 13px; }
+    .error-actions { display: flex; gap: 8px; }
+    .message-failure-row { display: flex; align-self: flex-end; margin-top: -13px; padding-right: 2px; }
+    .message-failure { display: grid; width: 28px; height: 28px; place-items: center; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--danger) 12%, var(--surface)); color: var(--danger); }
+    .message-failure .icon { width: 18px; height: 18px; }
+    .failure-notice { position: absolute; z-index: 26; inset: auto 20px 92px; }
+    .failure-notice .error-card { border-radius: 22px; background: var(--surface); box-shadow: 0 18px 46px rgba(0,0,0,.24); }
+    .failure-notice-head { display: flex; align-items: center; justify-content: space-between; }
+    .failure-notice-head .icon-button { width: 32px; height: 32px; }
+    .small-button { min-height: 36px; padding: 0 13px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); font-size: 13px; }
+    .small-button.primary { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+
+    .composer-zone { position: absolute; z-index: 6; inset: auto 14px 17px; }
+    .composer {
+      display: grid;
+      grid-template-columns: minmax(0,1fr) auto;
+      align-items: center;
+      min-height: 58px;
+      padding: 7px 8px 7px 14px;
+      border: 1px solid var(--line);
+      border-radius: 29px;
+      background: color-mix(in srgb, var(--surface) 96%, transparent);
+      box-shadow: 0 8px 24px rgba(20,20,20,.09);
+      backdrop-filter: blur(20px);
+      transition: min-height 180ms ease, border-radius 180ms ease, padding 180ms ease;
+    }
+    .composer.expanded {
+      grid-template-columns: 1fr;
+      align-items: stretch;
+      min-height: 126px;
+      padding: 12px 10px 9px 14px;
+      border-radius: 25px;
+    }
+    .message-input {
+      width: 100%;
+      min-height: 38px;
+      max-height: 94px;
+      resize: none;
+      padding: 8px 4px;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      line-height: 1.45;
+    }
+    .message-input::placeholder { color: #8b8b86; }
+    .composer-footer { display: contents; }
+    .composer.expanded .composer-footer { display: flex; align-items: center; justify-content: space-between; }
+    .model-strength { display: none; align-items: center; gap: 5px; min-height: 38px; padding: 0 8px; border: 0; border-radius: 19px; background: transparent; font-size: 13px; }
+    .composer.expanded .model-strength { display: inline-flex; }
+    .composer-actions { display: flex; align-items: center; gap: 3px; }
+    .composer-actions .icon-button { width: 38px; height: 38px; background: transparent; }
+    .composer:not(.expanded) .camera-button { display: none; }
+    .composer-actions .send-button { background: var(--accent); color: var(--accent-ink); }
+    .composer-actions .send-button:disabled { background: var(--soft); color: #aaa9a5; }
+
+    .template-home { height: 100%; overflow-y: auto; padding: 8px 2px 24px; }
+    .template-search { display: grid; grid-template-columns: 20px 1fr 34px; align-items: center; gap: 7px; margin-bottom: 18px; padding: 5px 7px 5px 13px; border: 1px solid var(--line); border-radius: 23px; background: var(--surface); }
+    .template-search input, .settings-search input, .drawer-search input { min-width: 0; border: 0; outline: 0; background: transparent; }
+    .template-heading h1 { margin: 0; font-size: 24px; }
+    .template-heading p { margin: 5px 0 22px; color: var(--muted); font-size: 13px; }
+    .template-card { display: grid; grid-template-columns: 50px 1fr 20px; align-items: center; gap: 13px; width: 100%; min-height: 82px; margin-bottom: 10px; padding: 13px; border: 1px solid transparent; border-radius: 21px; background: var(--surface); text-align: left; }
+    .template-card:hover { border-color: var(--line); transform: translateY(-1px); }
+    .template-icon { display: grid; width: 50px; height: 50px; place-items: center; border-radius: 16px; background: #eeebff; color: var(--template); }
+    .template-card strong, .template-card small { display: block; }
+    .template-card small { margin-top: 4px; color: var(--muted); }
+
+    .scrim { position: absolute; z-index: 20; inset: 0; background: rgba(0,0,0,.38); opacity: 1; transition: opacity 180ms ease; }
+    .drawer {
+      position: absolute;
+      z-index: 21;
+      inset: 0 48px 0 0;
+      display: flex;
+      flex-direction: column;
+      padding: 50px 16px 16px;
+      border-radius: 38px 22px 22px 38px;
+      background: var(--surface);
+      box-shadow: 15px 0 50px rgba(0,0,0,.18);
+      animation: drawer-in 190ms ease-out;
+    }
+    @keyframes drawer-in { from { transform: translateX(-26px); opacity: .6; } }
+    .drawer-brand { display: flex; min-height: 44px; align-items: center; justify-content: space-between; padding: 0 4px; }
+    .wordmark { display: flex; align-items: center; gap: 9px; font-size: 21px; font-weight: 720; letter-spacing: -.4px; }
+    .mini-cube { width: 23px; height: 23px; transform: rotate(30deg); border: 1.5px solid currentColor; border-radius: 7px; }
+    .wordmark .cube-mark { width: 25px; height: 25px; margin: 0; border-radius: 8px; }
+    .wordmark .cube-mark::after { inset: 5px; border-radius: 4px; }
+    .drawer-search { display: grid; grid-template-columns: 20px 1fr 30px; align-items: center; gap: 7px; margin-top: 8px; padding: 5px 7px 5px 12px; border-radius: 20px; background: var(--soft); }
+    .profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+      padding: 10px 11px;
+      border-radius: 18px;
+      background: var(--soft);
+    }
+    .avatar { display: grid; width: 40px; height: 40px; flex: 0 0 auto; place-items: center; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-weight: 650; }
+    .profile-copy { min-width: 0; flex: 1; }
+    .profile-copy strong, .profile-copy small { display: block; }
+    .profile-copy small { margin-top: 2px; color: var(--muted); font-size: 11px; }
+    .profile-actions { display: flex; gap: 2px; }
+    .profile-actions .icon-button { width: 36px; height: 36px; background: transparent; color: var(--muted); }
+    .all-chats { display: flex; width: 100%; min-height: 43px; align-items: center; gap: 10px; margin-top: 12px; padding: 0 10px; border: 0; border-radius: 13px; background: var(--soft); text-align: left; font-weight: 600; }
+    .drawer-scroll { min-height: 0; flex: 1; overflow-y: auto; padding-top: 2px; scrollbar-width: none; }
+    .drawer-section { margin-top: 13px; }
+    .drawer-section h2 { margin: 0 0 5px; padding: 0 8px; color: var(--muted); font-size: 12px; font-weight: 600; }
+    .drawer-row { display: grid; grid-template-columns: 19px minmax(0,1fr) auto; align-items: center; gap: 9px; width: 100%; min-height: 39px; padding: 6px 9px; border: 0; border-radius: 11px; background: transparent; text-align: left; }
+    .drawer-row:hover { background: var(--soft); }
+    .drawer-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .drawer-row small { color: var(--muted); font-size: 10px; }
+    .new-chat { display: flex; width: 100%; min-height: 48px; flex: 0 0 auto; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; border: 0; border-radius: 24px; background: var(--accent); color: var(--accent-ink); font-weight: 650; }
+
+    .sheet { position: absolute; z-index: 22; inset: auto 0 0; padding: 9px 14px 20px; border-radius: 28px 28px 0 0; background: var(--surface); box-shadow: 0 -20px 55px rgba(0,0,0,.2); animation: sheet-in 180ms ease-out; }
+    @keyframes sheet-in { from { transform: translateY(24px); opacity: .7; } }
+    .sheet-handle { width: 38px; height: 4px; margin: 0 auto 15px; border-radius: 4px; background: var(--line); }
+    .attachment-actions { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+    .attachment-actions button { display: grid; min-height: 86px; place-items: center; gap: 5px; padding: 10px 3px; border: 0; border-radius: 17px; background: var(--soft); font-size: 12px; }
+    .attachment-actions .icon-disc { display: grid; width: 39px; height: 39px; place-items: center; border-radius: 50%; background: var(--surface); }
+    .gallery { display: grid; grid-template-columns: repeat(3,1fr); gap: 3px; margin-top: 12px; }
+    .photo { position: relative; aspect-ratio: 1.12; overflow: hidden; border: 0; background: linear-gradient(145deg,#b7c6aa,#667863); }
+    .photo::before { position: absolute; inset: 18% 8% -20% 25%; border-radius: 50% 50% 0 0; background: rgba(255,255,255,.32); content: ""; transform: rotate(-10deg); }
+    .photo:nth-child(2) { background: linear-gradient(145deg,#a6bfd3,#4d6a82); }
+    .photo:nth-child(3) { background: linear-gradient(145deg,#d2b4a1,#785c50); }
+    .photo:nth-child(4) { background: linear-gradient(145deg,#d8ca94,#8a7737); }
+    .photo:nth-child(5) { background: linear-gradient(145deg,#b8a5cf,#65527c); }
+    .photo:nth-child(6) { background: linear-gradient(145deg,#a8cfca,#4f7772); }
+
+    .strength-options { display: grid; gap: 4px; }
+    .strength-options button { display: grid; grid-template-columns: 32px 1fr 22px; align-items: center; gap: 10px; width: 100%; min-height: 56px; padding: 7px 10px; border: 0; border-radius: 14px; background: transparent; text-align: left; }
+    .strength-options button:hover, .strength-options button.selected { background: var(--soft); }
+    .strength-options strong, .strength-options small { display: block; }
+    .strength-options small { margin-top: 2px; color: var(--muted); font-size: 11px; }
+
+    .settings-page { position: absolute; z-index: 10; inset: 0; overflow-y: auto; padding: 48px 16px 26px; background: var(--page); }
+    .settings-header { display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; margin-bottom: 10px; }
+    .settings-header h1 { margin: 0; font-size: 25px; }
+    .settings-search { display: grid; grid-template-columns: 20px 1fr; align-items: center; gap: 8px; min-height: 45px; margin: 8px 2px 18px; padding: 0 13px; border-radius: 23px; background: var(--soft); }
+    .settings-group { margin-top: 17px; }
+    .settings-group h2 { margin: 0 0 7px; padding: 0 8px; color: var(--muted); font-size: 12px; font-weight: 650; }
+    .settings-card { overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); }
+    .settings-row { display: grid; grid-template-columns: 38px minmax(0,1fr) auto 18px; align-items: center; gap: 8px; width: 100%; min-height: 68px; padding: 9px 13px; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; }
+    .settings-row:last-child { border-bottom: 0; }
+    .settings-row:hover { background: var(--soft); }
+    .settings-icon { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 11px; background: var(--soft); }
+    .settings-copy { min-width: 0; }
+    .settings-copy strong, .settings-copy small { display: block; }
+    .settings-copy strong { font-size: 14px; }
+    .settings-copy small { overflow: hidden; margin-top: 3px; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+    .settings-value { color: var(--muted); font-size: 11px; }
+    .settings-empty { padding: 40px 20px; color: var(--muted); text-align: center; }
+
+    .app-page { position: absolute; z-index: 14; inset: 0; overflow-y: auto; padding: 48px 16px 28px; background: var(--page); }
+    .page-header { position: sticky; z-index: 2; top: -48px; display: grid; grid-template-columns: 40px minmax(0,1fr) 40px; align-items: center; min-height: 62px; margin: -1px 0 10px; background: color-mix(in srgb, var(--page) 94%, transparent); backdrop-filter: blur(18px); }
+    .page-header h1 { overflow: hidden; margin: 0; font-size: 21px; text-overflow: ellipsis; white-space: nowrap; }
+    .page-content { display: grid; gap: 16px; padding-bottom: 18px; }
+    .page-intro { margin: -2px 5px 2px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .section-title { margin: 2px 7px -9px; color: var(--muted); font-size: 12px; font-weight: 650; }
+    .hero-card, .form-card, .list-card { overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); }
+    .hero-card { padding: 17px; }
+    .hero-card h2 { margin: 0; font-size: 18px; }
+    .hero-card p { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .hero-row { display: flex; align-items: center; gap: 12px; }
+    .hero-icon { display: grid; width: 46px; height: 46px; flex: 0 0 auto; place-items: center; border-radius: 15px; background: var(--soft); }
+    .status-badge { display: inline-flex; min-height: 25px; align-items: center; gap: 5px; margin-top: 10px; padding: 0 9px; border-radius: 13px; background: color-mix(in srgb, var(--success) 12%, var(--surface)); color: var(--success); font-size: 11px; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .form-row, .list-row { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 10px; min-height: 58px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+    .form-row:last-child, .list-row:last-child { border-bottom: 0; }
+    button.list-row { width: 100%; border: 0; background: transparent; text-align: left; }
+    button.list-row:hover { background: var(--soft); }
+    .row-copy strong, .row-copy small { display: block; }
+    .row-copy strong { font-size: 13px; font-weight: 590; }
+    .row-copy small { margin-top: 3px; color: var(--muted); font-size: 11px; line-height: 1.35; }
+    .row-value { color: var(--muted); font-size: 11px; }
+    .toggle { position: relative; width: 42px; height: 25px; padding: 0; border: 0; border-radius: 13px; background: var(--soft-2); transition: background 150ms ease; }
+    .toggle::after { position: absolute; top: 3px; left: 3px; width: 19px; height: 19px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.18); content: ""; transition: transform 150ms ease; }
+    .toggle.on { background: var(--accent); }
+    .toggle.on::after { transform: translateX(17px); background: var(--accent-ink); }
+    .choice-chips { display: flex; flex-wrap: wrap; gap: 7px; padding: 12px 14px; }
+    .chip { min-height: 34px; padding: 0 12px; border: 1px solid var(--line); border-radius: 17px; background: var(--surface); font-size: 12px; }
+    .chip.selected { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+    .field { display: grid; gap: 6px; padding: 11px 14px; border-bottom: 1px solid var(--line); }
+    .field:last-child { border-bottom: 0; }
+    .field label { color: var(--muted); font-size: 11px; }
+    .text-field, .textarea-field { width: 100%; border: 0; outline: 0; background: transparent; }
+    .textarea-field { min-height: 82px; resize: vertical; line-height: 1.5; }
+    .action-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .primary-action, .secondary-action, .danger-action { min-height: 42px; padding: 0 15px; border-radius: 21px; font-size: 12px; font-weight: 600; }
+    .primary-action { border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); }
+    .secondary-action { border: 1px solid var(--line); background: var(--surface); }
+    .danger-action { border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--line)); background: transparent; color: var(--danger); }
+    .full-action { width: 100%; }
+    .stats-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; }
+    .stat-card { padding: 14px; border: 1px solid var(--line); border-radius: 17px; background: var(--surface); }
+    .stat-card strong, .stat-card small { display: block; }
+    .stat-card strong { font-size: 20px; }
+    .stat-card small { margin-top: 3px; color: var(--muted); font-size: 10px; }
+    .tabs { display: flex; gap: 3px; padding: 3px; border-radius: 20px; background: var(--soft); overflow-x: auto; }
+    .tabs button { min-height: 34px; flex: 1 0 auto; padding: 0 10px; border: 0; border-radius: 17px; background: transparent; color: var(--muted); font-size: 11px; }
+    .tabs button.active { background: var(--surface); color: var(--ink); font-weight: 600; }
+    .empty-card { padding: 28px 16px; border: 1px dashed var(--line); border-radius: 18px; color: var(--muted); font-size: 12px; line-height: 1.55; text-align: center; }
+    .conversation-list .list-row { grid-template-columns: minmax(0,1fr) auto; }
+    .conversation-list time { color: var(--muted); font-size: 10px; }
+    .translation-box { min-height: 145px; }
+    .audit-code { overflow-x: auto; margin: 0; padding: 13px; border-radius: 15px; background: var(--soft); color: var(--muted); font: 10px/1.55 ui-monospace, monospace; white-space: pre-wrap; }
+    .toast { position: absolute; z-index: 30; left: 50%; bottom: 26px; max-width: calc(100% - 40px); padding: 10px 15px; border-radius: 19px; background: var(--ink); color: var(--page); font-size: 11px; transform: translateX(-50%); box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+    .shortcut-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .shortcut-grid button { display: flex; min-height: 42px; align-items: center; gap: 8px; padding: 0 11px; border: 0; border-radius: 14px; background: var(--soft); font-size: 12px; }
+    .app-page.project-page { overflow: hidden; }
+    .project-page .page-content { height: calc(100% - 72px); align-content: start; overflow-y: auto; padding-bottom: 96px; scrollbar-width: none; }
+    .project-page .page-content::-webkit-scrollbar { display: none; }
+    .project-composer-shell { position: absolute; z-index: 3; right: 16px; bottom: 17px; left: 16px; padding-top: 20px; background: linear-gradient(transparent, var(--page) 30%); }
+
+    .demo-bar { display: flex; max-width: 100%; flex-wrap: wrap; justify-content: center; gap: 6px; }
+    .demo-bar button { min-height: 34px; padding: 0 11px; border: 1px solid rgba(0,0,0,.1); border-radius: 17px; background: #fff; color: #555; font-size: 12px; }
+    .demo-bar button.active { border-color: #171715; background: #171715; color: #fff; }
+    .caption { margin: 0; color: #74746f; font-size: 12px; text-align: center; }
+
+    @media (prefers-color-scheme: dark) {
+      :root { color-scheme: dark; --page:#151515; --surface:#222; --soft:#2c2c2a; --soft-2:#353533; --ink:#f4f4f1; --muted:#aaa9a4; --line:#3a3a37; --accent:#f4f4f1; --accent-ink:#171715; --template:#b9afff; }
+      body { background:#0d0d0d; }
+      .phone { border-color:rgba(255,255,255,.1); box-shadow:0 24px 70px rgba(0,0,0,.48); }
+      .demo-bar button { border-color:rgba(255,255,255,.12); background:#222; color:#bbb; }
+      .demo-bar button.active { background:#f4f4f1; color:#171715; }
+      .template-icon { background:#302b52; }
+    }
+    @media (max-width: 420px) {
+      body { padding: 0; background: var(--page); }
+      .phone { width: 100%; height: calc(100vh - 58px); min-height: 620px; border: 0; border-radius: 0; box-shadow: none; }
+      .drawer { border-radius: 0 22px 22px 0; }
+      .demo-bar { padding: 8px; }
+      .caption { padding-bottom: 8px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior:auto!important; animation-duration:.01ms!important; transition-duration:.01ms!important; } }
+  </style>
+</head>
+<body>
+<div class="prototype">
+  <div class="phone" id="phone">
+    <div class="statusbar"><span>9:41</span><span class="status-icons">● ◒ ▰</span></div>
+    <header class="topbar" id="mainTopbar">
+      <button class="icon-button" id="menuButton" aria-label="打开侧边栏"><svg class="icon"><use href="#i-menu"/></svg></button>
+      <div class="switch" role="tablist">
+        <button id="chatTab" class="active" role="tab" aria-selected="true">聊天</button>
+        <button id="templateTab" role="tab" aria-selected="false">模板</button>
+      </div>
+      <button class="icon-button" id="contextButton" aria-label="更多功能"><svg class="icon"><use href="#i-more"/></svg></button>
+    </header>
+
+    <main class="stage">
+      <section class="empty" id="emptyView">
+        <div class="cube-mark" aria-hidden="true"></div>
+        <h1>有什么可以帮你？</h1>
+        <p>一种智能，无限形态</p>
+      </section>
+      <section class="messages" id="messagesView" hidden></section>
+      <section class="template-home" id="templateView" hidden>
+        <div class="template-search" id="templateSearch" hidden>
+          <svg class="icon"><use href="#i-search"/></svg>
+          <input id="templateQuery" type="search" placeholder="搜索模板" aria-label="搜索模板">
+          <button class="icon-button" id="closeTemplateSearch" aria-label="关闭搜索"><svg class="icon"><use href="#i-close"/></svg></button>
+        </div>
+        <div class="template-heading"><h1>模板</h1><p>让 AI 以更适合任务的界面出现</p></div>
+        <button class="template-card" data-search="渐进训练 健身 记录" data-open-page="template-training">
+          <span class="template-icon"><svg class="icon"><use href="#i-activity"/></svg></span>
+          <span><strong>渐进训练</strong><small>今日计划、训练记录与日历</small></span>
+          <svg class="icon"><use href="#i-chevron"/></svg>
+        </button>
+        <button class="template-card" data-search="深度学习 阅读 课程 研究" data-open-page="template-learning">
+          <span class="template-icon"><svg class="icon"><use href="#i-book"/></svg></span>
+          <span><strong>深度学习</strong><small>阅读、课程与研究笔记</small></span>
+          <svg class="icon"><use href="#i-chevron"/></svg>
+        </button>
+      </section>
+    </main>
+
+    <section class="composer-zone" id="composerZone">
+      <div class="composer" id="composer">
+        <textarea class="message-input" id="messageInput" rows="1" placeholder="发消息…" aria-label="消息"></textarea>
+        <div class="composer-footer">
+          <button class="model-strength" id="strengthButton" aria-label="选择模型强度"><svg class="icon"><use href="#i-spark"/></svg><span id="strengthLabel">自动</span><svg class="icon"><use href="#i-down"/></svg></button>
+          <div class="composer-actions">
+            <button class="icon-button camera-button" aria-label="相机"><svg class="icon"><use href="#i-camera"/></svg></button>
+            <button class="icon-button" aria-label="语音输入"><svg class="icon"><use href="#i-mic"/></svg></button>
+            <button class="icon-button send-button" id="addSendButton" aria-label="添加附件"><svg class="icon"><use href="#i-plus"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="scrim" id="scrim" hidden></div>
+    <aside class="drawer" id="drawer" aria-label="侧边栏" hidden>
+      <div class="drawer-brand">
+        <span class="wordmark"><span class="cube-mark" aria-hidden="true"></span>MutCube</span>
+        <button class="icon-button" id="drawerSearchButton" aria-label="搜索"><svg class="icon"><use href="#i-search"/></svg></button>
+      </div>
+      <div class="drawer-search" id="drawerSearch" hidden><svg class="icon"><use href="#i-search"/></svg><input type="search" placeholder="搜索聊天与项目"><button class="icon-button" id="closeDrawerSearch"><svg class="icon"><use href="#i-close"/></svg></button></div>
+      <section class="profile">
+        <span class="avatar">路</span>
+        <span class="profile-copy"><strong>失路人</strong><small>本地个人空间</small></span>
+        <span class="profile-actions">
+          <button class="icon-button" id="favoritesButton" aria-label="收藏"><svg class="icon"><use href="#i-star"/></svg></button>
+          <button class="icon-button" id="settingsButton" aria-label="设置"><svg class="icon"><use href="#i-settings"/></svg></button>
+        </span>
+      </section>
+      <button class="all-chats" id="allChatsButton"><svg class="icon"><use href="#i-message"/></svg>所有聊天</button>
+      <div class="drawer-scroll">
+        <section class="drawer-section">
+          <h2>置顶</h2>
+          <button class="drawer-row" data-open-page="project-training"><svg class="icon"><use href="#i-folder"/></svg><span>渐进训练</span><small>项目</small></button>
+          <button class="drawer-row" data-demo-link="conversation"><svg class="icon"><use href="#i-message"/></svg><span>每周计划整理</span><small>聊天</small></button>
+        </section>
+        <section class="drawer-section">
+          <h2>项目</h2>
+          <button class="drawer-row" data-open-page="project-training"><svg class="icon"><use href="#i-folder"/></svg><span>渐进训练</span><small></small></button>
+          <button class="drawer-row" data-open-page="project-study"><svg class="icon"><use href="#i-folder"/></svg><span>深度学习</span><small></small></button>
+          <button class="drawer-row" data-open-page="project-new"><svg class="icon"><use href="#i-plus"/></svg><span>新建项目</span><small></small></button>
+        </section>
+        <section class="drawer-section">
+          <h2>最近</h2>
+          <button class="drawer-row" data-demo-link="conversation"><svg class="icon"><use href="#i-message"/></svg><span>今天肩部不太舒服</span><small>刚刚</small></button>
+          <button class="drawer-row" data-demo-link="conversation"><svg class="icon"><use href="#i-message"/></svg><span>训练日的饮食安排</span><small>昨天</small></button>
+          <button class="drawer-row" data-demo-link="conversation"><svg class="icon"><use href="#i-message"/></svg><span>把复杂任务拆成一周计划</span><small>周一</small></button>
+        </section>
+      </div>
+      <button class="new-chat" id="newChatButton"><svg class="icon"><use href="#i-edit"/></svg>新建对话</button>
+    </aside>
+
+    <section class="sheet" id="attachmentSheet" hidden>
+      <div class="sheet-handle"></div>
+      <div class="attachment-actions">
+        <button><span class="icon-disc"><svg class="icon"><use href="#i-camera"/></svg></span>拍照</button>
+        <button><span class="icon-disc"><svg class="icon"><use href="#i-image"/></svg></span>相册</button>
+        <button><span class="icon-disc"><svg class="icon"><use href="#i-folder"/></svg></span>本地文件</button>
+      </div>
+      <div class="gallery"><button class="photo" aria-label="照片一"></button><button class="photo" aria-label="照片二"></button><button class="photo" aria-label="照片三"></button><button class="photo" aria-label="照片四"></button><button class="photo" aria-label="照片五"></button><button class="photo" aria-label="照片六"></button></div>
+    </section>
+
+    <section class="sheet" id="strengthSheet" hidden>
+      <div class="sheet-handle"></div>
+      <div class="strength-options">
+        <button data-strength="自动" class="selected"><svg class="icon"><use href="#i-spark"/></svg><span><strong>自动</strong><small>根据任务自动决定推理程度</small></span><svg class="icon"><use href="#i-check"/></svg></button>
+        <button data-strength="快速"><svg class="icon"><use href="#i-bolt"/></svg><span><strong>快速</strong><small>适合简单问答，优先响应速度</small></span><span></span></button>
+        <button data-strength="标准"><svg class="icon"><use href="#i-gauge"/></svg><span><strong>标准</strong><small>平衡速度与思考深度</small></span><span></span></button>
+        <button data-strength="深入"><svg class="icon"><use href="#i-brain"/></svg><span><strong>深入</strong><small>适合复杂分析与规划</small></span><span></span></button>
+      </div>
+    </section>
+
+    <section class="failure-notice" id="failureNotice" role="dialog" aria-modal="true" aria-labelledby="failureNoticeTitle" hidden>
+      <div class="error-card">
+        <div class="failure-notice-head">
+          <div class="error-title" id="failureNoticeTitle"><svg class="icon"><use href="#i-alert"/></svg>消息生成失败</div>
+          <button class="icon-button" data-close-failure aria-label="关闭提醒"><svg class="icon"><use href="#i-close"/></svg></button>
+        </div>
+        <p>模型服务暂时无法连接。你的消息已经保留，可以重新尝试，或者检查当前 Provider 配置。</p>
+        <div class="error-actions"><button class="small-button primary" data-demo-link="streaming">重新尝试</button><button class="small-button" data-demo-link="settings">检查设置</button></div>
+      </div>
+    </section>
+
+    <section class="settings-page" id="settingsPage" hidden>
+      <header class="settings-header"><button class="icon-button" id="backSettings" aria-label="返回"><svg class="icon"><use href="#i-back"/></svg></button><h1>设置</h1><span></span></header>
+      <label class="settings-search"><svg class="icon"><use href="#i-search"/></svg><input id="settingsQuery" type="search" placeholder="搜索设置"></label>
+      <div id="settingsGroups">
+        <section class="settings-group" data-group><h2>模型服务</h2><div class="settings-card">
+          <button class="settings-row" data-setting="模型 Provider API Key 连接" data-open-page="providers"><span class="settings-icon"><svg class="icon"><use href="#i-bot"/></svg></span><span class="settings-copy"><strong>模型与 Provider</strong><small>Xiaomi MiMo · mimo-v2.5-pro</small></span><span class="settings-value">已配置</span><svg class="icon"><use href="#i-chevron"/></svg></button>
+        </div></section>
+        <section class="settings-group" data-group><h2>扩展</h2><div class="settings-card">
+          <button class="settings-row" data-setting="MCP 工具 OAuth 权限" data-open-page="mcp"><span class="settings-icon"><svg class="icon"><use href="#i-puzzle"/></svg></span><span class="settings-copy"><strong>MCP 与工具</strong><small>服务连接、工具启停与逐项授权</small></span><span class="settings-value">0 个</span><svg class="icon"><use href="#i-chevron"/></svg></button>
+          <button class="settings-row" data-setting="提示词 Skills 模式 知识条目" data-open-page="context"><span class="settings-icon"><svg class="icon"><use href="#i-spark"/></svg></span><span class="settings-copy"><strong>提示词与上下文</strong><small>快捷提示词、Skills、对话模式与知识条目</small></span><span class="settings-value"></span><svg class="icon"><use href="#i-chevron"/></svg></button>
+        </div></section>
+        <section class="settings-group" data-group><h2>对话</h2><div class="settings-card">
+          <button class="settings-row" data-setting="记忆 管理" data-open-page="memory"><span class="settings-icon"><svg class="icon"><use href="#i-brain"/></svg></span><span class="settings-copy"><strong>记忆管理</strong><small>查看和删除全局或项目记忆</small></span><span class="settings-value">0 条</span><svg class="icon"><use href="#i-chevron"/></svg></button>
+          <button class="settings-row" data-setting="显示 主题 字号 聊天 气泡 背景" data-open-page="display"><span class="settings-icon"><svg class="icon"><use href="#i-palette"/></svg></span><span class="settings-copy"><strong>显示与聊天行为</strong><small>主题、字号、消息时间和自动滚动</small></span><span class="settings-value">跟随系统</span><svg class="icon"><use href="#i-chevron"/></svg></button>
+          <button class="settings-row" data-setting="语音 TTS ASR" data-open-page="speech"><span class="settings-icon"><svg class="icon"><use href="#i-mic"/></svg></span><span class="settings-copy"><strong>语音</strong><small>TTS 朗读与 ASR 语音输入</small></span><span class="settings-value">系统</span><svg class="icon"><use href="#i-chevron"/></svg></button>
+          <button class="settings-row" data-setting="通知 反馈 振动 后台生成" data-open-page="notifications"><span class="settings-icon"><svg class="icon"><use href="#i-bell"/></svg></span><span class="settings-copy"><strong>通知与反馈</strong><small>生成完成通知与振动反馈</small></span><span class="settings-value"></span><svg class="icon"><use href="#i-chevron"/></svg></button>
+        </div></section>
+        <section class="settings-group" data-group><h2>数据与应用</h2><div class="settings-card">
+          <button class="settings-row" data-setting="统计 Token 调试 日志" data-open-page="stats"><span class="settings-icon"><svg class="icon"><use href="#i-chart"/></svg></span><span class="settings-copy"><strong>统计与调试</strong><small>对话 Token 统计与脱敏请求日志</small></span><span class="settings-value"></span><svg class="icon"><use href="#i-chevron"/></svg></button>
+          <button class="settings-row" data-setting="回收站 删除 恢复" data-open-page="recycle"><span class="settings-icon"><svg class="icon"><use href="#i-trash"/></svg></span><span class="settings-copy"><strong>回收站</strong><small>恢复或永久删除已移除的对话</small></span><span class="settings-value"></span><svg class="icon"><use href="#i-chevron"/></svg></button>
+          <button class="settings-row" data-setting="数据 备份 WebDAV S3 恢复" data-open-page="backup"><span class="settings-icon"><svg class="icon"><use href="#i-backup"/></svg></span><span class="settings-copy"><strong>数据与备份</strong><small>完整备份、恢复与安全诊断</small></span><span class="settings-value">未启用</span><svg class="icon"><use href="#i-chevron"/></svg></button>
+          <button class="settings-row" data-setting="开发者 日志 诊断" data-open-page="developer"><span class="settings-icon"><svg class="icon"><use href="#i-code"/></svg></span><span class="settings-copy"><strong>开发者选项</strong><small>脱敏日志与高级诊断开关</small></span><span class="settings-value">关闭</span><svg class="icon"><use href="#i-chevron"/></svg></button>
+          <button class="settings-row" data-setting="关于 版本 许可 更新" data-open-page="about"><span class="settings-icon"><svg class="icon"><use href="#i-info"/></svg></span><span class="settings-copy"><strong>关于 MutCube</strong><small>版本、许可与更新信息</small></span><span class="settings-value">0.1.0</span><svg class="icon"><use href="#i-chevron"/></svg></button>
+        </div></section>
+      </div>
+      <div class="settings-empty" id="settingsEmpty" hidden>没有匹配的设置</div>
+    </section>
+
+    <section class="app-page" id="appPage" hidden>
+      <header class="page-header">
+        <button class="icon-button" id="backAppPage" aria-label="返回"><svg class="icon"><use href="#i-back"/></svg></button>
+        <h1 id="appPageTitle">页面</h1>
+        <button class="icon-button" id="appPageMore" aria-label="页面菜单"><svg class="icon"><use href="#i-more"/></svg></button>
+      </header>
+      <div class="page-content" id="appPageContent"></div>
+    </section>
+
+    <section class="sheet" id="conversationSheet" hidden>
+      <div class="sheet-handle"></div>
+      <div class="list-card">
+        <button class="list-row" data-open-page="conversation-settings"><span class="row-copy"><strong>对话设置</strong><small>系统提示词、项目和模型覆盖</small></span><svg class="icon"><use href="#i-chevron"/></svg></button>
+        <button class="list-row" data-open-page="stats"><span class="row-copy"><strong>对话统计</strong><small>Token、速度、耗时和模型</small></span><svg class="icon"><use href="#i-chevron"/></svg></button>
+        <button class="list-row" data-prototype-action="已创建桌面快捷方式"><span class="row-copy"><strong>添加到桌面</strong><small>直接进入当前对话</small></span><svg class="icon"><use href="#i-chevron"/></svg></button>
+        <button class="list-row" data-prototype-action="已打开系统分享面板"><span class="row-copy"><strong>导出与分享</strong><small>Markdown 或结构化 JSON</small></span><svg class="icon"><use href="#i-chevron"/></svg></button>
+        <button class="list-row" data-prototype-action="对话已移入回收站"><span class="row-copy"><strong style="color:var(--danger)">删除对话</strong><small>可在回收站恢复</small></span><svg class="icon"><use href="#i-chevron"/></svg></button>
+      </div>
+    </section>
+
+    <section class="sheet" id="projectSheet" hidden>
+      <div class="sheet-handle"></div>
+      <div class="list-card">
+        <button class="list-row" data-open-page="project-settings"><span class="row-copy"><strong>项目设置</strong><small>模型、系统提示词与项目记忆</small></span><svg class="icon"><use href="#i-settings"/></svg></button>
+        <button class="list-row" data-prototype-action="项目名称已进入编辑状态"><span class="row-copy"><strong>重命名项目</strong><small>修改项目的显示名称</small></span><svg class="icon"><use href="#i-edit"/></svg></button>
+        <button class="list-row" data-prototype-action="项目已添加到桌面"><span class="row-copy"><strong>添加到桌面</strong><small>直接进入这个项目</small></span><svg class="icon"><use href="#i-chevron"/></svg></button>
+        <button class="list-row" data-prototype-action="删除项目只会解除会话归属"><span class="row-copy"><strong style="color:var(--danger)">删除项目</strong><small>会话和用户数据仍然保留</small></span><svg class="icon"><use href="#i-trash"/></svg></button>
+      </div>
+    </section>
+
+    <section class="sheet" id="messageSheet" hidden>
+      <div class="sheet-handle"></div>
+      <div class="list-card">
+        <button class="list-row" data-prototype-action="已收藏这条回答"><span class="row-copy"><strong>收藏回答</strong><small>可从侧边栏收藏入口访问</small></span><svg class="icon"><use href="#i-star"/></svg></button>
+        <button class="list-row" data-prototype-action="已显示中文译文"><span class="row-copy"><strong>翻译</strong><small>译文保存在当前消息版本</small></span><svg class="icon"><use href="#i-language"/></svg></button>
+        <button class="list-row" data-prototype-action="已从此处派生新对话"><span class="row-copy"><strong>派生新对话</strong><small>保留此前上下文</small></span><svg class="icon"><use href="#i-message"/></svg></button>
+        <button class="list-row" data-open-page="generation-detail"><span class="row-copy"><strong>生成详情</strong><small>推理、工具调用和原始统计</small></span><svg class="icon"><use href="#i-chevron"/></svg></button>
+        <button class="list-row" data-prototype-action="消息及后续分支已删除"><span class="row-copy"><strong style="color:var(--danger)">删除消息</strong><small>同时删除其后续分支</small></span><svg class="icon"><use href="#i-trash"/></svg></button>
+      </div>
+    </section>
+
+    <div class="toast" id="toast" hidden></div>
+  </div>
+
+  <nav class="demo-bar" aria-label="原型演示状态">
+    <button data-demo="empty" class="active">空白首页</button>
+    <button data-demo="conversation">已有对话</button>
+    <button data-demo="streaming">生成中</button>
+    <button data-demo="error">生成失败</button>
+    <button data-demo="settings">设置</button>
+    <button data-open-page="feature-map">功能地图</button>
+  </nav>
+  <p class="caption" id="caption">点击输入框查看展开状态；空白草稿不会进入历史记录。</p>
+</div>
+
+<svg width="0" height="0" aria-hidden="true" style="position:absolute">
+  <defs>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="m6 12 6-6 6 6M12 6v13"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M9 21h6"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8.5h3l1.5-2h7l1.5 2h3v10H4z"/><circle cx="12" cy="13" r="3.2"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 2 1.3 5.2L18 9l-4.7 1.8L12 16l-1.3-5.2L6 9l4.7-1.8zM18.5 15l.7 2.3 2.3.7-2.3.7-.7 2.3-.7-2.3-2.3-.7 2.3-.7z"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="m8 10 4 4 4-4"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-activity" viewBox="0 0 24 24"><path d="M4 8v8M7 6v12M17 6v12M20 8v8M7 12h10"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H12v18H7.5A3.5 3.5 0 0 0 4 23zM20 5.5A3.5 3.5 0 0 0 16.5 2H12v18h4.5A3.5 3.5 0 0 1 20 23z"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.6-2-3.4-2.5 1a8 8 0 0 0-1.8-1L14.2 3h-4.4l-.4 3a8 8 0 0 0-1.8 1L5 6 3 9.4 5.1 11a7 7 0 0 0 0 2L3 14.6 5 18l2.6-1a8 8 0 0 0 1.8 1l.4 3h4.4l.4-3a8 8 0 0 0 1.8-1l2.6 1 2-3.4-2.1-1.6a7 7 0 0 0 .1-1z"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v11H3z"/></symbol>
+    <symbol id="i-message" viewBox="0 0 24 24"><path d="M4 4h16v12H9l-5 4z"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4l11-11-4-4L4 16zM13.5 6.5l4 4"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m3 17 5-4 4 3 3-2 6 4"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4 10-10"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="m13 2-8 12h7l-1 8 8-12h-7z"/></symbol>
+    <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M4 17a8 8 0 1 1 16 0M12 14l4-4"/></symbol>
+    <symbol id="i-brain" viewBox="0 0 24 24"><path d="M9 4a3 3 0 0 0-5 2 3 3 0 0 0 0 5 4 4 0 0 0 2 7 3 3 0 0 0 5 2V5a3 3 0 0 0-2-1zM15 4a3 3 0 0 1 5 2 3 3 0 0 1 0 5 4 4 0 0 1-2 7 3 3 0 0 1-5 2V5a3 3 0 0 1 2-1zM8 9h3M13 14h3"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="i-bot" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M12 3v4M8 12h.01M16 12h.01M8 16h8"/></symbol>
+    <symbol id="i-puzzle" viewBox="0 0 24 24"><path d="M9 3h6v4a2 2 0 1 0 4 0h2v6h-4a2 2 0 1 0 0 4h4v4h-6v-3a2 2 0 1 0-4 0v3H3v-6h3a2 2 0 1 0 0-4H3V3h6z"/></symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0 0 18h1.5a2 2 0 0 0 0-4H12a2 2 0 0 1 0-4h5a4 4 0 0 0 4-4c0-3.3-4-6-9-6z"/><circle cx="7" cy="10" r="1" fill="currentColor"/><circle cx="9" cy="6.5" r="1" fill="currentColor"/><circle cx="14" cy="6" r="1" fill="currentColor"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M5 17h14l-2-3V9a5 5 0 0 0-10 0v5zM10 20h4"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14"/></symbol>
+    <symbol id="i-backup" viewBox="0 0 24 24"><path d="M20 8a8 8 0 1 0 1 8M20 3v5h-5"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 4l-4 16"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 17h.01"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4H4v12h4"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2"/><circle cx="6" cy="12" r="2"/><circle cx="18" cy="19" r="2"/><path d="m8 11 8-5M8 13l8 5"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M18 12a6 6 0 0 0-10-4L4 12M6 12a6 6 0 0 0 10 4l4-4"/></symbol>
+    <symbol id="i-volume" viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6l-5 4zM17 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></symbol>
+    <symbol id="i-language" viewBox="0 0 24 24"><path d="M4 5h9M8.5 3v2M6 9c1.5 2.5 3.5 4.5 6 6M12 5c-1 4-4 8-8 10M14 20l4-10 4 10M15.5 16h5"/></symbol>
+  </defs>
+</svg>
+
+<script>
+  const $ = (selector) => document.querySelector(selector);
+  const $$ = (selector) => [...document.querySelectorAll(selector)];
+  const phone = $('#phone');
+  const emptyView = $('#emptyView');
+  const messagesView = $('#messagesView');
+  const templateView = $('#templateView');
+  const composerZone = $('#composerZone');
+  const composer = $('#composer');
+  const input = $('#messageInput');
+  const addSend = $('#addSendButton');
+  const scrim = $('#scrim');
+  const drawer = $('#drawer');
+  const attachSheet = $('#attachmentSheet');
+  const strengthSheet = $('#strengthSheet');
+  const failureNotice = $('#failureNotice');
+  const conversationSheet = $('#conversationSheet');
+  const projectSheet = $('#projectSheet');
+  const messageSheet = $('#messageSheet');
+  const settingsPage = $('#settingsPage');
+  const appPage = $('#appPage');
+  const appPageTitle = $('#appPageTitle');
+  const appPageContent = $('#appPageContent');
+  const caption = $('#caption');
+  let surface = 'chat';
+  let currentDemo = 'empty';
+  let currentPage = null;
+  let currentProjectName = '渐进训练';
+  let conversationReturnPage = null;
+  let conversationHistoryArmed = false;
+  let edgeSwipeStart = null;
+  let pageHistory = [];
+  let toastTimer = null;
+
+  const formRow = (title, subtitle, value = '') => `<div class="form-row"><span class="row-copy"><strong>${title}</strong><small>${subtitle}</small></span><span class="row-value">${value}</span></div>`;
+  const toggleRow = (title, subtitle, on = false) => `<div class="form-row"><span class="row-copy"><strong>${title}</strong><small>${subtitle}</small></span><button class="toggle ${on ? 'on' : ''}" role="switch" aria-checked="${on}" aria-label="${title}"></button></div>`;
+  const linkRow = (title, subtitle, page, value = '') => `<button class="list-row" data-open-page="${page}"><span class="row-copy"><strong>${title}</strong><small>${subtitle}</small></span><span class="row-value">${value}</span></button>`;
+  const actionRow = (title, subtitle, action, tone = '') => `<button class="list-row" data-prototype-action="${action}"><span class="row-copy"><strong class="${tone}">${title}</strong><small>${subtitle}</small></span>${icon('i-chevron')}</button>`;
+  const field = (label, value = '', multiline = false) => `<div class="field"><label>${label}</label>${multiline ? `<textarea class="textarea-field">${value}</textarea>` : `<input class="text-field" value="${value}">`}</div>`;
+  const projectComposer = projectName => `<div class="project-composer-shell"><div class="composer" data-project-composer><textarea class="message-input" rows="1" data-project-input data-project-name="${projectName}" placeholder="在“${projectName}”中发起新聊天…" aria-label="在“${projectName}”中发起新聊天…"></textarea><div class="composer-footer"><button class="model-strength" data-project-strength aria-label="选择模型强度">${icon('i-spark')}<span>自动</span>${icon('i-down')}</button><div class="composer-actions"><button class="icon-button camera-button" aria-label="相机">${icon('i-camera')}</button><button class="icon-button" aria-label="语音输入">${icon('i-mic')}</button><button class="icon-button send-button" data-project-send aria-label="添加附件">${icon('i-plus')}</button></div></div></div></div>`;
+
+  const pages = {
+    'feature-map': {
+      title: '功能地图',
+      intro: '完整原型入口。这里列出当前产品基线的主要能力，每一项都可继续进入对应页面。',
+      body: () => `
+        <div class="hero-card"><div class="hero-row"><span class="hero-icon">${icon('i-spark')}</span><span><h2>MutCube 0.1.0</h2><p>会话与设置功能全量原型 · 模板运行时前置设计</p></span></div><span class="status-badge"><span class="status-dot"></span>31 个可交互页面</span></div>
+        <p class="section-title">聊天与组织</p><div class="list-card">
+          ${linkRow('所有聊天','置顶、最近、搜索和多选管理','all-chats')}
+          ${linkRow('收藏','跨会话收藏的消息版本','favorites')}
+          ${linkRow('独立翻译','文本翻译，不写入聊天历史','translation')}
+          ${linkRow('项目','会话归属、模型覆盖与快捷方式','project-training')}
+          ${linkRow('对话设置','系统提示词、项目和模型覆盖','conversation-settings')}
+          ${linkRow('消息生成详情','Token、推理和工具审计','generation-detail')}
+        </div>
+        <p class="section-title">模型与扩展</p><div class="list-card">
+          ${linkRow('模型与 Provider','供应商、模型目录、导入导出与诊断','providers')}
+          ${linkRow('MCP 与工具','OAuth、工具权限和调用审批','mcp')}
+          ${linkRow('提示词与上下文','快捷提示词、Skills、模式和知识条目','context')}
+          ${linkRow('记忆管理','全局与项目记忆','memory')}
+        </div>
+        <p class="section-title">应用与数据</p><div class="list-card">
+          ${linkRow('显示与聊天行为','主题、字号、气泡、背景与启动方式','display')}
+          ${linkRow('语音','TTS 与 ASR 独立服务商','speech')}
+          ${linkRow('通知与反馈','后台生成、完成通知与振动','notifications')}
+          ${linkRow('统计与调试','对话统计、请求日志和原始错误','stats')}
+          ${linkRow('回收站','恢复和永久删除','recycle')}
+          ${linkRow('数据与备份','本地、WebDAV、S3、文件与缓存','backup')}
+          ${linkRow('开发者选项','脱敏日志和诊断能力','developer')}
+          ${linkRow('关于 MutCube','版本、更新与开源许可','about')}
+        </div>
+        <p class="section-title">模板</p><div class="list-card">
+          ${linkRow('渐进训练','示例：计划、记录与日历','template-training')}
+          ${linkRow('深度学习','示例：资料、课程与研究笔记','template-learning')}
+        </div>`
+    },
+    'all-chats': {
+      title: '所有聊天', intro: '全局会话入口，不作为项目显示。长按或页面菜单可进入批量管理。',
+      body: () => `<label class="settings-search"><svg class="icon"><use href="#i-search"/></svg><input placeholder="搜索标题与消息内容"></label><div class="tabs"><button class="active">全部</button><button>置顶</button><button>最近</button><button>已归档</button></div><div class="list-card conversation-list"><button class="list-row" data-demo-link="conversation"><span class="row-copy"><strong>今天肩部不太舒服</strong><small>渐进训练 · Xiaomi MiMo</small></span><time>刚刚</time></button><button class="list-row" data-demo-link="conversation"><span class="row-copy"><strong>训练日的饮食安排</strong><small>渐进训练 · Xiaomi MiMo</small></span><time>昨天</time></button><button class="list-row" data-demo-link="conversation"><span class="row-copy"><strong>把复杂任务拆成一周计划</strong><small>未加入项目 · Xiaomi MiMo</small></span><time>周一</time></button></div><div class="action-row"><button class="primary-action" data-prototype-action="已创建空白新对话">新建对话</button><button class="secondary-action" data-prototype-action="已进入多选管理">管理</button></div>`
+    },
+    favorites: {
+      title: '收藏', intro: '收藏绑定具体消息版本，切换回答分支不会丢失。',
+      body: () => `<div class="list-card"><button class="list-row" data-demo-link="conversation"><span class="row-copy"><strong>肩部不适时的训练调整建议</strong><small>今天肩部不太舒服 · 今天</small></span>${icon('i-chevron')}</button><button class="list-row" data-demo-link="conversation"><span class="row-copy"><strong>训练日前后的碳水安排</strong><small>训练日的饮食安排 · 昨天</small></span>${icon('i-chevron')}</button></div>`
+    },
+    translation: {
+      title: '翻译', intro: '独立工具页面，翻译请求不会创建会话或污染聊天上下文。',
+      body: () => `<div class="tabs"><button class="active">自动检测</button><button>英语</button><button>日语</button><button>更多</button></div><div class="form-card"><div class="field"><label>原文</label><textarea class="textarea-field translation-box" placeholder="输入或粘贴需要翻译的内容">Progressive overload should be adjusted when pain changes movement quality.</textarea></div></div><div class="action-row"><button class="primary-action full-action" data-prototype-action="翻译完成，结果不会写入聊天历史">翻译为简体中文</button></div><div class="hero-card"><p style="margin:0;color:var(--ink);font-size:14px">当疼痛影响动作质量时，应当调整渐进超负荷训练。</p><div class="message-actions"><button>${icon('i-copy')}</button><button>${icon('i-volume')}</button><button>${icon('i-share')}</button></div></div>`
+    },
+    'project-training': {
+      title: '渐进训练', intro: '项目聚合相关会话、模板、记忆和可选模型覆盖。',
+      project: true,
+      body: () => `<div class="hero-card"><div class="hero-row"><span class="hero-icon">${icon('i-activity')}</span><span><h2>渐进训练</h2><p>6 个会话 · 2 条项目记忆 · 1 个模板</p></span></div><div class="shortcut-grid"><button data-open-page="template-training">${icon('i-activity')}打开模板</button><button data-focus-project>${icon('i-edit')}新建对话</button></div></div><p class="section-title">最近会话</p><div class="list-card"><button class="list-row" data-demo-link="conversation" data-conversation-title="今天肩部不太舒服"><span class="row-copy"><strong>今天肩部不太舒服</strong><small>刚刚 · mimo-v2.5-pro</small></span>${icon('i-chevron')}</button><button class="list-row" data-demo-link="conversation" data-conversation-title="训练日的饮食安排"><span class="row-copy"><strong>训练日的饮食安排</strong><small>昨天 · mimo-v2.5-pro</small></span>${icon('i-chevron')}</button></div>${projectComposer('渐进训练')}`
+    },
+    'project-study': {
+      title: '深度学习', intro: '项目可以使用不同模型、上下文和模板，但不会隔离用户拥有的数据。',
+      project: true,
+      body: () => `<div class="hero-card"><div class="hero-row"><span class="hero-icon">${icon('i-book')}</span><span><h2>深度学习</h2><p>3 个会话 · 1 条知识条目</p></span></div><div class="shortcut-grid"><button data-open-page="template-learning">${icon('i-book')}打开模板</button><button data-focus-project>${icon('i-edit')}新建对话</button></div></div><p class="section-title">最近会话</p><div class="list-card"><button class="list-row" data-demo-link="conversation" data-conversation-title="Transformer 论文阅读"><span class="row-copy"><strong>Transformer 论文阅读</strong><small>今天 · mimo-v2.5-pro</small></span>${icon('i-chevron')}</button><button class="list-row" data-demo-link="conversation" data-conversation-title="一周课程安排"><span class="row-copy"><strong>一周课程安排</strong><small>周二 · mimo-v2.5-pro</small></span>${icon('i-chevron')}</button></div>${projectComposer('深度学习')}`
+    },
+    'project-settings': {
+      title: '项目设置', intro: '这些设置只影响当前项目，新建聊天会自动继承。',
+      body: () => `<div class="form-card">${field('项目名称',currentProjectName)}${field('项目说明',currentProjectName === '渐进训练' ? '聚合训练相关的会话、模板与记忆。' : '聚合学习相关的会话、模板与知识条目。',true)}${field('系统提示词',currentProjectName === '渐进训练' ? '回答时优先考虑动作安全，并结合项目内已授权的训练数据。' : '帮助我理解概念、规划学习任务并沉淀知识。',true)}</div><div class="form-card">${formRow('模型','继承全局 Provider','Xiaomi MiMo')}${toggleRow('允许项目记忆','本项目会话可读取项目记忆',true)}</div><button class="primary-action full-action" data-prototype-action="项目设置已保存">保存</button>`
+    },
+    'project-new': {
+      title: '新建项目', intro: '项目用于组织会话并提供可选的模型、提示词与记忆上下文。',
+      body: () => `<div class="form-card">${field('项目名称','')}${field('项目说明','',true)}${field('系统提示词（可选）','',true)}</div><div class="form-card">${formRow('模型与 Provider','默认继承全局设置','继承全局')}${toggleRow('允许项目记忆','会话可读取此项目中的记忆',true)}</div><button class="primary-action full-action" data-prototype-action="项目已创建">创建项目</button>`
+    },
+    'template-training': {
+      title: '渐进训练', intro: '模板拥有自己的结构化数据与隐式 AI 任务，聊天可在授权后读取相关数据。',
+      body: () => `<div class="hero-card"><div class="hero-row"><span class="template-icon">${icon('i-activity')}</span><span><h2>今日：胸与三头</h2><p>由上次训练记录生成 · 预计 55 分钟</p></span></div></div><div class="tabs"><button class="active">今日训练</button><button>训练日历</button><button>个人资料</button><button>运行日志</button></div><div class="list-card"><div class="list-row"><span class="row-copy"><strong>上斜哑铃卧推</strong><small>3 组 × 10–12 次 · 目标 RIR 2</small></span><span class="row-value">15 kg</span></div><div class="list-row"><span class="row-copy"><strong>平板哑铃卧推</strong><small>3 组 × 10–12 次 · 目标 RIR 1–2</small></span><span class="row-value">17.5 kg</span></div><div class="list-row"><span class="row-copy"><strong>绳索下压</strong><small>3 组 × 12–15 次 · 目标 RIR 1</small></span><span class="row-value">25 kg</span></div></div><button class="primary-action full-action" data-prototype-action="训练记录已保存，下一次计划已进入后台生成">提交训练记录</button>`
+    },
+    'template-learning': {
+      title: '深度学习', intro: '这是第二个模板形态示例，用于验证运行时抽象不依赖健身业务。',
+      body: () => `<div class="hero-card"><div class="hero-row"><span class="template-icon">${icon('i-book')}</span><span><h2>今日学习</h2><p>阅读 45 分钟 · 复习 20 分钟</p></span></div></div><div class="tabs"><button class="active">今日</button><button>资料库</button><button>笔记</button><button>进度</button></div><div class="list-card"><div class="list-row"><span class="row-copy"><strong>Attention Is All You Need</strong><small>阅读第 3–4 节并记录三个问题</small></span><span class="row-value">45 分钟</span></div><div class="list-row"><span class="row-copy"><strong>间隔复习</strong><small>复习昨天生成的知识卡片</small></span><span class="row-value">20 分钟</span></div></div><button class="primary-action full-action" data-prototype-action="学习记录已保存">完成今日学习</button>`
+    },
+    providers: {
+      title: '模型与 Provider', intro: '密钥使用系统 Keystore 加密；普通配置可导入、导出和分享。',
+      body: () => `<div class="hero-card"><div class="hero-row"><span class="hero-icon">${icon('i-bot')}</span><span><h2>Xiaomi MiMo</h2><p>OpenAI-compatible · mimo-v2.5-pro</p></span></div><span class="status-badge"><span class="status-dot"></span>连接正常</span></div><p class="section-title">Provider</p><div class="list-card">${linkRow('Xiaomi MiMo','活动档案 · 已保存密钥','provider-detail','已启用')}${linkRow('Anthropic','原生 Messages 协议','provider-detail','已停用')}${linkRow('Google Gemini','原生 Generative Language 协议','provider-detail','已停用')}</div><div class="action-row"><button class="primary-action" data-open-page="provider-new">添加 Provider</button><button class="secondary-action" data-prototype-action="已打开导入入口">导入</button><button class="secondary-action" data-prototype-action="已导出脱敏配置">导出</button></div><p class="section-title">模型目录</p><div class="list-card">${linkRow('MiMo V2.5 Pro','mimo-v2.5-pro · ★ 收藏','model-detail','多模态')}${linkRow('MiMo V2.5','mimo-v2.5','model-detail','文本')}</div>`
+    },
+    'provider-detail': {
+      title: 'Xiaomi MiMo', intro: '连接测试会先读取模型列表；不支持列表接口时使用最小生成探测。',
+      body: () => `<div class="form-card">${field('显示名称','Xiaomi MiMo')}${field('API 地址','https://api.xiaomimimo.com/v1')}${field('API Key','••••••••••••')}${formRow('协议','请求与响应格式','OpenAI-compatible')}</div><div class="form-card">${toggleRow('启用 Provider','停用后不会出现在模型选择器',true)}${toggleRow('设为默认','新会话优先使用此档案',true)}</div><div class="action-row"><button class="primary-action" data-prototype-action="连接成功，发现 4 个模型">测试连接</button><button class="secondary-action" data-prototype-action="已刷新模型目录">刷新模型</button><button class="danger-action" data-prototype-action="内置 Provider 不会被删除">删除</button></div>`
+    },
+    'provider-new': {
+      title: '添加 Provider', intro: '可从预设快速创建，也可填写任意兼容端点。',
+      body: () => `<div class="choice-chips"><button class="chip selected">OpenAI</button><button class="chip">MiMo</button><button class="chip">Anthropic</button><button class="chip">Gemini</button><button class="chip">DeepSeek</button><button class="chip">OpenRouter</button><button class="chip">Ollama</button><button class="chip">自定义</button></div><div class="form-card">${field('名称','OpenAI')}${field('API 地址','https://api.openai.com/v1')}${field('API Key','')}${formRow('协议','可切换原生或兼容协议','OpenAI-compatible')}</div><button class="primary-action full-action" data-prototype-action="Provider 已保存">保存并测试</button>`
+    },
+    'model-detail': {
+      title: '模型设置', intro: '显式能力声明会约束真实请求；留空表示由 Provider 自行决定。',
+      body: () => `<div class="form-card">${field('模型 ID','mimo-v2.5-pro')}${field('显示别名','MiMo V2.5 Pro')}${field('短图标','M')}${field('上下文窗口','128000')}${field('最大输出长度','8192')}</div><div class="form-card">${toggleRow('收藏模型','收藏后在选择器中优先显示',true)}${toggleRow('图片输入','允许发送图片内容',true)}${toggleRow('工具调用','允许模型调用受控工具',true)}${toggleRow('推理能力','显示模型强度选择',true)}</div><button class="primary-action full-action" data-prototype-action="模型能力已保存">保存模型</button>`
+    },
+    mcp: {
+      title: 'MCP 与工具', intro: '每个服务和工具均可独立启停；敏感调用默认逐项询问。',
+      body: () => `<div class="hero-card"><div class="hero-row"><span class="hero-icon">${icon('i-puzzle')}</span><span><h2>扩展服务</h2><p>Streamable HTTP · Bearer Token · OAuth 2.0</p></span></div></div><div class="list-card"><div class="list-row"><span class="row-copy"><strong>示例知识服务</strong><small>https://mcp.example.com · OAuth 已授权</small></span><button class="toggle on" role="switch" aria-checked="true"></button></div>${linkRow('搜索知识库','工具 · 每次询问','mcp-tool','询问')}${linkRow('写入条目','工具 · 默认拒绝','mcp-tool','拒绝')}</div><div class="action-row"><button class="primary-action" data-open-page="mcp-new">添加服务</button><button class="secondary-action" data-prototype-action="已刷新全部工具">刷新</button></div>`
+    },
+    'mcp-new': {
+      title: '添加 MCP 服务', intro: 'OAuth 授权只授予当前服务所需范围，可随时撤销。',
+      body: () => `<div class="form-card">${field('服务名称','')}${field('Streamable HTTP 地址','https://')}${field('Bearer Token（可选）','')}${field('OAuth Client ID（可选）','')}</div><div class="form-card">${toggleRow('启用 OAuth 2.0','使用 AppAuth 完成浏览器授权',false)}${toggleRow('连接后自动发现工具','读取服务端工具清单',true)}</div><button class="primary-action full-action" data-prototype-action="服务配置已验证">保存并连接</button>`
+    },
+    'mcp-tool': {
+      title: '工具权限', intro: '权限策略只针对当前工具，模型无法绕过这里的选择。',
+      body: () => `<div class="hero-card"><h2>搜索知识库</h2><p>读取授权知识库并返回匹配条目，不允许修改数据。</p></div><div class="choice-chips"><button class="chip">始终允许</button><button class="chip selected">每次询问</button><button class="chip">始终拒绝</button></div><div class="form-card">${toggleRow('在工具选择器中启用','关闭后不发送给模型',true)}${toggleRow('记录脱敏审计日志','记录参数结构与结果状态',true)}</div>`
+    },
+    context: {
+      title: '提示词与上下文', intro: '上下文注入有单条、数量和总字符上限，防止意外撑满模型窗口。',
+      body: () => `<div class="tabs"><button class="active">快捷提示词</button><button>Skills</button><button>对话模式</button><button>知识条目</button></div><div class="list-card"><div class="list-row"><span class="row-copy"><strong>总结为行动清单</strong><small>快捷提示词 · 点击插入输入框</small></span>${icon('i-chevron')}</div><div class="list-row"><span class="row-copy"><strong>严谨研究</strong><small>Skill · 已启用</small></span><button class="toggle on" role="switch" aria-checked="true"></button></div><div class="list-row"><span class="row-copy"><strong>简洁回答</strong><small>对话模式 · 当前激活</small></span><span class="status-badge"><span class="status-dot"></span>激活</span></div><div class="list-row"><span class="row-copy"><strong>训练术语</strong><small>关键词：RIR、训练、动作 · 2.1K 字符</small></span><button class="toggle on" role="switch" aria-checked="true"></button></div></div><button class="primary-action full-action" data-prototype-action="已创建新的上下文条目">新建条目</button>`
+    },
+    memory: {
+      title: '记忆管理', intro: '记忆归用户所有，并按全局或项目范围授权给会话与模板。',
+      body: () => `<div class="tabs"><button class="active">全部</button><button>全局</button><button>项目</button></div><div class="list-card"><div class="list-row"><span class="row-copy"><strong>用户偏好简体中文回答</strong><small>全局记忆 · 由用户确认写入</small></span><button class="icon-button" data-prototype-action="记忆已删除">${icon('i-trash')}</button></div><div class="list-row"><span class="row-copy"><strong>腿部暂不增加训练负荷</strong><small>渐进训练 · 2026-09-12</small></span><button class="icon-button" data-prototype-action="记忆已删除">${icon('i-trash')}</button></div></div><div class="form-card">${toggleRow('允许 AI 建议记忆','实际写入前仍需符合安全规则',false)}${toggleRow('拒绝疑似密钥和密码','敏感信息永远不会写入记忆',true)}</div>`
+    },
+    display: {
+      title: '显示与聊天行为', intro: '主题和字号即时预览，其余选项从下一条消息或下次启动生效。',
+      body: () => `<p class="section-title">外观</p><div class="form-card">${formRow('主题','浅色、深色或跟随设备','跟随系统')}<div class="choice-chips"><button class="chip">浅色</button><button class="chip">深色</button><button class="chip selected">跟随系统</button></div>${formRow('文字大小','影响聊天与设置页面','标准')}<div class="choice-chips"><button class="chip">紧凑</button><button class="chip selected">标准</button><button class="chip">舒适</button></div>${formRow('聊天背景','纯色或用户选择的图片','默认')}${formRow('气泡样式','用户消息形状与配色','简洁')}</div><p class="section-title">行为</p><div class="form-card">${toggleRow('显示消息时间','在消息下方显示时间',false)}${toggleRow('自动滚动','生成时保持显示最新内容',true)}${toggleRow('回车发送','关闭时回车换行',false)}${toggleRow('长文本自动转为附件','超过阈值后保护输入体验',true)}${formRow('启动时','恢复最近会话或空白草稿','空白草稿')}</div>`
+    },
+    speech: {
+      title: '语音', intro: '朗读与识别可分别使用系统能力或独立的 OpenAI-compatible 服务。',
+      body: () => `<p class="section-title">文字转语音 TTS</p><div class="form-card">${formRow('服务','系统或独立 Provider','系统 TTS')}${formRow('声音','使用设备可用声音','中文女声')}${formRow('语速','0.5×–2.0×','1.0×')}${toggleRow('自动朗读 AI 回复','只朗读最终完成的文本',false)}</div><p class="section-title">语音识别 ASR</p><div class="form-card">${formRow('服务','系统或独立 Provider','系统识别')}${formRow('语言','自动检测或固定语言','zh-CN')}${field('独立服务 API 地址','')}${field('API Key','')}</div><button class="secondary-action full-action" data-prototype-action="语音服务测试完成">测试语音服务</button>`
+    },
+    notifications: {
+      title: '通知与反馈', intro: '通知不会包含回答正文或敏感信息。',
+      body: () => `<div class="form-card">${toggleRow('后台持续生成','使用前台服务保护正在进行的请求',true)}${toggleRow('生成完成通知','离开应用后通知完成',true)}${toggleRow('失败通知','后台请求失败时提醒',true)}${toggleRow('消息完成振动','模型回答完成时轻触反馈',false)}${toggleRow('自动打开最近会话','点击通知后回到对应会话',true)}</div><button class="secondary-action full-action" data-prototype-action="已发送一条本地测试通知">发送测试通知</button>`
+    },
+    stats: {
+      title: '统计与调试', intro: '统计始终可用；请求日志与脱敏原始错误仅在开发者模式下展示。',
+      body: () => `<div class="stats-grid"><div class="stat-card"><strong>128K</strong><small>累计输入 Token</small></div><div class="stat-card"><strong>19.4K</strong><small>累计输出 Token</small></div><div class="stat-card"><strong>38.2</strong><small>平均 tokens/s</small></div><div class="stat-card"><strong>4.1s</strong><small>平均生成耗时</small></div></div><div class="list-card">${formRow('对话次数','包含成功和中止的生成','46')}${formRow('缓存命中','Provider 报告的缓存 Token','31%')}${formRow('最常用模型','按完成请求统计','mimo-v2.5-pro')}</div><p class="section-title">最近请求</p><div class="list-card">${linkRow('mimo-v2.5-pro · 成功','OpenAI-compatible · 3.9s','generation-detail','刚刚')}${linkRow('mimo-v2.5-pro · 用户中止','保留部分回复 · 1.4s','generation-detail','12 分钟前')}</div>`
+    },
+    'generation-detail': {
+      title: '生成详情', intro: '请求内容仅展示结构与脱敏信息，不显示 API Key。',
+      body: () => `<div class="stats-grid"><div class="stat-card"><strong>1.2K</strong><small>输入 Token</small></div><div class="stat-card"><strong>168</strong><small>输出 Token</small></div><div class="stat-card"><strong>42.8</strong><small>tokens/s</small></div><div class="stat-card"><strong>3.9s</strong><small>总耗时</small></div></div><div class="form-card">${formRow('Provider','Xiaomi MiMo','OpenAI-compatible')}${formRow('模型','显示别名与实际 ID','mimo-v2.5-pro')}${formRow('推理强度','模型支持时才发送','自动')}${formRow('结束原因','Provider 返回','stop')}</div><p class="section-title">执行轨迹</p><pre class="audit-code">1. 组装上下文：14 条消息\n2. 命中知识条目：训练术语\n3. 调用模型：HTTP 200\n4. 流式事件：文本 37 次\n5. 持久化候选版本：成功</pre><div class="action-row"><button class="secondary-action" data-prototype-action="诊断信息已复制">复制诊断信息</button><button class="secondary-action" data-prototype-action="已打开脱敏请求日志">查看请求日志</button></div>`
+    },
+    recycle: {
+      title: '回收站', intro: '普通删除可撤销；只有这里的永久删除才不可恢复。',
+      body: () => `<div class="list-card"><div class="list-row"><span class="row-copy"><strong>旧的测试对话</strong><small>删除于今天 14:22 · 3 条消息</small></span><button class="secondary-action" data-prototype-action="对话已恢复">恢复</button></div><div class="list-row"><span class="row-copy"><strong>临时饮食记录</strong><small>删除于昨天 · 8 条消息</small></span><button class="secondary-action" data-prototype-action="对话已恢复">恢复</button></div></div><button class="danger-action full-action" data-prototype-action="原型不会实际永久删除数据">清空回收站</button>`
+    },
+    backup: {
+      title: '数据与备份', intro: '备份包含会话和普通配置，但主动排除所有密钥、密码和访问令牌。',
+      body: () => `<div class="hero-card"><h2>上次备份：今天 18:30</h2><p>本地完整备份 · 12.6 MB · 安全检查通过</p><span class="status-badge"><span class="status-dot"></span>数据库与附件完整</span></div><p class="section-title">备份与恢复</p><div class="list-card">${actionRow('创建本地备份','保存为单个 MutCube 备份文件','已生成本地备份文件')}${actionRow('从文件恢复','恢复前自动创建安全快照','已打开文件选择器')}${linkRow('WebDAV','远程上传、下载与连接测试','remote-backup','未配置')}${linkRow('S3 兼容存储','AWS V4 签名与自定义端点','remote-backup','未配置')}</div><p class="section-title">存储管理</p><div class="list-card">${formRow('数据库','会话、项目与结构化内容','4.8 MB')}${formRow('附件','应用私有目录中的用户文件','7.6 MB')}${actionRow('检查孤立附件','仅清理数据库未引用文件','发现 0 项')}${actionRow('清理缓存','不影响会话和附件','已清理缓存')}</div>${toggleRow('定期备份提醒','每 7 天提醒一次',true)}`
+    },
+    'remote-backup': {
+      title: '远程备份', intro: '选择一个目标配置。凭据只保存在本机 Keystore，不进入备份。',
+      body: () => `<div class="tabs"><button class="active">WebDAV</button><button>S3</button></div><div class="form-card">${field('服务地址','https://dav.example.com/remote.php/dav/files/user/')}${field('用户名','')}${field('密码','')}${field('远程文件名','mutcube-backup.mcbak')}</div><div class="form-card">${toggleRow('启用远程备份','手动触发，不进行实时同步',false)}${toggleRow('仅 Wi-Fi 上传','减少移动网络消耗',true)}</div><div class="action-row"><button class="primary-action" data-prototype-action="远程连接测试成功">测试连接</button><button class="secondary-action" data-prototype-action="远程备份配置已保存">保存</button></div>`
+    },
+    developer: {
+      title: '开发者选项', intro: '启用后才显示请求日志和脱敏原始错误；不会降低凭据保护强度。',
+      body: () => `<div class="form-card">${toggleRow('开发者模式','显示高级诊断入口',false)}${toggleRow('记录请求日志','仅记录脱敏后的请求元数据',false)}${toggleRow('显示原始错误','自动移除 URL 凭据和认证头',false)}</div><p class="section-title">诊断</p><div class="list-card">${actionRow('导出诊断报告','设备、数据库、Provider 和错误摘要','诊断报告已生成')}${actionRow('查看数据库状态','只读检查迁移与完整性','数据库检查通过')}${actionRow('查看网络状态','DNS、TLS 和端点连通性','网络诊断完成')}</div>`
+    },
+    about: {
+      title: '关于 MutCube', intro: '一种智能，无限形态。',
+      body: () => `<div class="hero-card"><div class="hero-row"><span class="hero-icon"><span class="mini-cube"></span></span><span><h2>MutCube</h2><p>版本 0.1.0-alpha · versionCode 1</p></span></div><span class="status-badge"><span class="status-dot"></span>当前已是最新版本</span></div><div class="list-card">${actionRow('检查更新','从代码仓库读取最新 Release','当前已是最新版本')}${linkRow('第三方开源许可','170 个依赖及其完整许可文本','licenses')}${actionRow('隐私与数据说明','数据默认保存在本机','已打开隐私说明')}${actionRow('项目主页','Gitee · wlwanglei/mutcube','已打开项目主页')}</div><div class="hero-card"><h2>MIT License</h2><p>MutCube 本体使用 MIT 协议。第三方依赖分别遵循其原始许可证。</p></div>`
+    },
+    licenses: {
+      title: '开源许可', intro: '许可目录由 AboutLibraries 在构建期生成，可搜索依赖并查看全文。',
+      body: () => `<label class="settings-search"><svg class="icon"><use href="#i-search"/></svg><input placeholder="搜索 170 个依赖"></label><div class="list-card">${formRow('AndroidX Compose','Apache License 2.0','Apache-2.0')}${formRow('Ktor Client','Apache License 2.0','Apache-2.0')}${formRow('MCP Kotlin SDK','Apache License 2.0','Apache-2.0')}${formRow('AppAuth for Android','Apache License 2.0','Apache-2.0')}${formRow('AboutLibraries','Apache License 2.0','Apache-2.0')}${formRow('Compose Unstyled','Apache License 2.0','Apache-2.0')}</div>`
+    },
+    'conversation-settings': {
+      title: '对话设置', intro: '只影响当前对话；留空的项目和模型项继续继承上级设置。',
+      body: () => `<div class="form-card">${field('对话标题','今天肩部不太舒服')}${field('对话级系统提示词','回答训练问题时优先考虑动作安全。',true)}${formRow('所属项目','可加入、移动或移出项目','渐进训练')}${formRow('Provider','默认继承项目','Xiaomi MiMo')}${formRow('模型','默认继承项目','mimo-v2.5-pro')}</div><div class="form-card">${toggleRow('自动生成后续问题','回答完成后显示建议',true)}${toggleRow('允许工具调用','遵循每个工具的权限策略',true)}${toggleRow('加入后台生成通知','离开应用后继续生成',true)}</div><button class="primary-action full-action" data-prototype-action="对话设置已保存">保存</button>`
+    }
+  };
+
+  function icon(id) { return `<svg class="icon"><use href="#${id}"/></svg>`; }
+  function closeOverlays() { drawer.hidden = true; attachSheet.hidden = true; strengthSheet.hidden = true; failureNotice.hidden = true; conversationSheet.hidden = true; projectSheet.hidden = true; messageSheet.hidden = true; scrim.hidden = true; }
+  function showOverlay(element) { closeOverlays(); element.hidden = false; scrim.hidden = false; }
+  function showToast(message) {
+    const toast = $('#toast');
+    clearTimeout(toastTimer);
+    toast.textContent = message;
+    toast.hidden = false;
+    toastTimer = setTimeout(() => { toast.hidden = true; }, 2200);
+  }
+  function renderPage(key, remember = true) {
+    const definition = pages[key];
+    if (!definition) return;
+    if (definition.project) currentProjectName = definition.title;
+    if (remember) {
+      if (currentPage) pageHistory.push({ type: 'page', id: currentPage });
+      else if (!settingsPage.hidden) pageHistory.push({ type: 'settings' });
+      else pageHistory.push({ type: 'surface', id: surface, demo: currentDemo });
+    }
+    closeOverlays();
+    settingsPage.hidden = true;
+    $('#mainTopbar').hidden = true;
+    composerZone.hidden = true;
+    emptyView.hidden = true;
+    messagesView.hidden = true;
+    templateView.hidden = true;
+    appPage.hidden = false;
+    appPage.classList.toggle('project-page', Boolean(definition.project));
+    appPageTitle.textContent = definition.title;
+    appPageContent.innerHTML = `${definition.intro ? `<p class="page-intro">${definition.intro}</p>` : ''}${definition.body()}`;
+    appPage.scrollTop = 0;
+    currentPage = key;
+    caption.textContent = `当前页面：${definition.title}。页面内的按钮、开关和下级入口均可操作。`;
+    $$('.demo-bar button').forEach(button => button.classList.toggle('active', button.dataset.openPage === key));
+  }
+  function restoreSettings() {
+    currentPage = null;
+    appPage.hidden = true;
+    settingsPage.hidden = false;
+    $('#mainTopbar').hidden = true;
+    composerZone.hidden = true;
+    emptyView.hidden = true;
+    messagesView.hidden = true;
+    templateView.hidden = true;
+    caption.textContent = '设置首页：每个功能入口都可以进入完整详情页。';
+  }
+  function restoreSurface(target) {
+    currentPage = null;
+    appPage.hidden = true;
+    $('#mainTopbar').hidden = false;
+    selectSurface(target || 'chat');
+  }
+  function goBackPage() {
+    const previous = pageHistory.pop();
+    if (!previous || previous.type === 'surface') { restoreSurface(previous?.id || 'chat'); return; }
+    if (previous.type === 'settings') { restoreSettings(); return; }
+    renderPage(previous.id, false);
+  }
+  function setComposer(expanded) { composer.classList.toggle('expanded', expanded); }
+  function syncSendButton() {
+    const hasText = input.value.trim().length > 0;
+    addSend.innerHTML = icon(hasText ? 'i-up' : 'i-plus');
+    addSend.setAttribute('aria-label', hasText ? '发送消息' : '添加附件');
+  }
+  function setDemo(name, preserveNavigation = false) {
+    if (name !== 'settings') currentDemo = name;
+    currentPage = null;
+    if (!preserveNavigation) {
+      pageHistory = [];
+      conversationReturnPage = null;
+      conversationHistoryArmed = false;
+    }
+    appPage.hidden = true;
+    settingsPage.hidden = true;
+    closeOverlays();
+    surface = 'chat';
+    $('#chatTab').classList.add('active');
+    $('#templateTab').classList.remove('active');
+    emptyView.hidden = name !== 'empty';
+    messagesView.hidden = name === 'empty';
+    templateView.hidden = true;
+    composerZone.hidden = false;
+    $('#mainTopbar').hidden = false;
+    setComposer(false);
+    input.value = '';
+    syncSendButton();
+    const user = `<div class="user-message">帮我把今天的训练计划调整得轻松一些，肩部有点不舒服。</div>`;
+    const actions = `<div class="message-actions"><button aria-label="复制" data-prototype-action="回答已复制">${icon('i-copy')}</button><button aria-label="分享" data-prototype-action="已打开系统分享面板">${icon('i-share')}</button><button aria-label="重新生成" data-prototype-action="已生成新的回答候选版本">${icon('i-refresh')}</button><button aria-label="朗读" data-prototype-action="开始朗读回答">${icon('i-volume')}</button><button aria-label="更多消息操作" data-message-menu>${icon('i-more')}</button></div>`;
+    if (name === 'conversation') {
+      messagesView.innerHTML = `${user}<div class="assistant-message"><p>可以。今天先避免高负荷推举和任何引起疼痛的动作，把训练调整为<strong>下肢与轻量核心</strong>。</p><p>如果肩部在日常活动中也疼痛，建议暂停上肢训练并观察恢复情况。</p>${actions}<div class="token-line">↑ 1.2K · ↓ 168 tokens · 42.8 tok/s · 3.9s</div></div>`;
+      caption.textContent = '消息操作保持稳定；Token 信息弱化显示，可进一步展开详情。';
+    } else if (name === 'streaming') {
+      messagesView.innerHTML = `${user}<div class="assistant-message"><p>可以。今天先避开高负荷推举，我会把计划调整为下肢训练，并保留轻量核心动作<span class="cursor"></span></p></div>`;
+      caption.textContent = '生成时只更新正文，操作栏在完成后出现，避免页面跳动。';
+    } else if (name === 'error') {
+      messagesView.innerHTML = `${user}<div class="message-failure-row"><button class="message-failure" data-show-failure aria-label="查看生成失败原因">${icon('i-alert')}</button></div>`;
+      caption.textContent = '生成失败只显示轻量感叹号；点击后再查看原因和处理选项。';
+    } else if (name === 'settings') {
+      $('#settingsQuery').value = '';
+      $$('[data-group], [data-setting]').forEach(item => { item.hidden = false; });
+      $('#settingsEmpty').hidden = true;
+      settingsPage.hidden = false;
+      $('#mainTopbar').hidden = true;
+      composerZone.hidden = true;
+      emptyView.hidden = true;
+      messagesView.hidden = true;
+      caption.textContent = '设置使用独立页面、卡片分组、状态摘要和实时搜索。';
+    } else {
+      messagesView.innerHTML = '';
+      caption.textContent = '点击输入框查看展开状态；空白草稿不会进入历史记录。';
+    }
+    $$('.demo-bar button').forEach(button => button.classList.toggle('active', button.dataset.demo === name));
+  }
+  function returnToProject() {
+    if (!conversationReturnPage) return false;
+    const projectPage = conversationReturnPage;
+    conversationReturnPage = null;
+    conversationHistoryArmed = false;
+    renderPage(projectPage, false);
+    caption.textContent = `已返回“${pages[projectPage].title}”，可以继续选择同一项目中的其他会话。`;
+    return true;
+  }
+  function armProjectReturn(projectPage) {
+    conversationReturnPage = projectPage;
+    window.history.pushState({ mutcubeView: 'project-conversation' }, '');
+    conversationHistoryArmed = true;
+  }
+  window.addEventListener('popstate', () => {
+    if (conversationHistoryArmed) returnToProject();
+  });
+  function selectSurface(next) {
+    surface = next;
+    currentPage = null;
+    appPage.hidden = true;
+    settingsPage.hidden = true;
+    closeOverlays();
+    const template = next === 'template';
+    $('#chatTab').classList.toggle('active', !template);
+    $('#templateTab').classList.toggle('active', template);
+    $('#chatTab').setAttribute('aria-selected', String(!template));
+    $('#templateTab').setAttribute('aria-selected', String(template));
+    const hasConversation = messagesView.innerHTML.trim().length > 0;
+    emptyView.hidden = template || hasConversation;
+    messagesView.hidden = template || !hasConversation;
+    templateView.hidden = !template;
+    composerZone.hidden = template;
+    $('#contextButton').innerHTML = icon(template ? 'i-search' : 'i-more');
+    $('#contextButton').setAttribute('aria-label', template ? '搜索模板' : '更多功能');
+    caption.textContent = template ? '模板与聊天同层切换；模板页不显示消息输入框。' : '返回聊天草稿，不增加新的导航层级。';
+  }
+
+  input.addEventListener('focus', () => { setComposer(true); caption.textContent = '输入框平滑展开，模型强度和完整操作区同时出现。'; });
+  input.addEventListener('input', syncSendButton);
+  input.addEventListener('blur', () => { if (!input.value.trim()) setTimeout(() => setComposer(false), 120); });
+  addSend.addEventListener('click', () => {
+    if (input.value.trim()) { setDemo('conversation'); return; }
+    showOverlay(attachSheet); caption.textContent = '附件面板提供真实可辨识的图片缩略图占位。';
+  });
+  $('#strengthButton').addEventListener('click', () => showOverlay(strengthSheet));
+  $$('.strength-options button').forEach(button => button.addEventListener('click', () => {
+    $$('.strength-options button').forEach(item => { item.classList.toggle('selected', item === button); item.lastElementChild.innerHTML = item === button ? icon('i-check') : ''; });
+    $('#strengthLabel').textContent = button.dataset.strength;
+    closeOverlays();
+    caption.textContent = `模型强度已切换为“${button.dataset.strength}”。`;
+  }));
+  $('#menuButton').addEventListener('click', () => { showOverlay(drawer); caption.textContent = '所有聊天与项目分离；新建对话固定在侧边栏底部。'; });
+  scrim.addEventListener('click', closeOverlays);
+  $('#drawerSearchButton').addEventListener('click', () => { $('#drawerSearch').hidden = false; $('#drawerSearch input').focus(); });
+  $('#drawerSearch input').addEventListener('input', event => {
+    const query = event.target.value.trim().toLowerCase();
+    $$('.drawer-row').forEach(row => { row.hidden = query && !row.textContent.toLowerCase().includes(query); });
+  });
+  $('#closeDrawerSearch').addEventListener('click', () => { $('#drawerSearch').hidden = true; $('#drawerSearch input').value = ''; $$('.drawer-row').forEach(row => { row.hidden = false; }); });
+  $('#settingsButton').addEventListener('click', () => { closeOverlays(); setDemo('settings'); });
+  $('#favoritesButton').addEventListener('click', () => renderPage('favorites'));
+  $('#allChatsButton').addEventListener('click', () => renderPage('all-chats'));
+  $('#newChatButton').addEventListener('click', () => { closeOverlays(); setDemo('empty'); });
+  $('#chatTab').addEventListener('click', () => selectSurface('chat'));
+  $('#templateTab').addEventListener('click', () => selectSurface('template'));
+  $('#contextButton').addEventListener('click', () => {
+    if (surface !== 'template') { showOverlay(conversationSheet); caption.textContent = '当前对话的设置、统计、导出、快捷方式和删除操作。'; return; }
+    $('#templateSearch').hidden = false;
+    $('#templateQuery').focus();
+  });
+  phone.addEventListener('pointerdown', event => {
+    if (!conversationReturnPage || !appPage.hidden || surface !== 'chat') return;
+    const bounds = phone.getBoundingClientRect();
+    if (event.clientX - bounds.left > 32) return;
+    edgeSwipeStart = { x: event.clientX, y: event.clientY, pointerId: event.pointerId };
+  });
+  phone.addEventListener('pointerup', event => {
+    if (!edgeSwipeStart || edgeSwipeStart.pointerId !== event.pointerId) return;
+    const horizontal = event.clientX - edgeSwipeStart.x;
+    const vertical = Math.abs(event.clientY - edgeSwipeStart.y);
+    edgeSwipeStart = null;
+    if (horizontal >= 72 && vertical <= 64) {
+      if (conversationHistoryArmed) window.history.back();
+      else returnToProject();
+    }
+  });
+  phone.addEventListener('pointercancel', () => { edgeSwipeStart = null; });
+  $('#closeTemplateSearch').addEventListener('click', () => { $('#templateSearch').hidden = true; $('#templateQuery').value = ''; $$('.template-card').forEach(card => card.hidden = false); });
+  $('#templateQuery').addEventListener('input', event => { const query = event.target.value.trim().toLowerCase(); $$('.template-card').forEach(card => card.hidden = query && !card.dataset.search.includes(query)); });
+  $('#backSettings').addEventListener('click', () => setDemo('empty'));
+  $('#settingsQuery').addEventListener('input', event => {
+    const query = event.target.value.trim().toLowerCase();
+    let matches = 0;
+    $$('[data-group]').forEach(group => {
+      let groupMatches = 0;
+      group.querySelectorAll('[data-setting]').forEach(row => { const visible = !query || row.dataset.setting.toLowerCase().includes(query) || row.textContent.toLowerCase().includes(query); row.hidden = !visible; if (visible) groupMatches++; });
+      group.hidden = groupMatches === 0;
+      matches += groupMatches;
+    });
+    $('#settingsEmpty').hidden = matches > 0;
+  });
+  $('#backAppPage').addEventListener('click', goBackPage);
+  $('#appPageMore').addEventListener('click', () => {
+    if (pages[currentPage]?.project) {
+      showOverlay(projectSheet);
+      caption.textContent = `管理“${currentProjectName}”项目；常用内容留在详情页，低频操作收在这里。`;
+      return;
+    }
+    showToast('页面级更多操作将在这里展开');
+  });
+  phone.addEventListener('input', event => {
+    const projectInput = event.target.closest('[data-project-input]');
+    if (!projectInput) return;
+    const send = projectInput.closest('[data-project-composer]').querySelector('[data-project-send]');
+    const ready = projectInput.value.trim().length > 0;
+    send.innerHTML = icon(ready ? 'i-up' : 'i-plus');
+    send.setAttribute('aria-label', ready ? '在项目中新建聊天' : '添加附件');
+  });
+  phone.addEventListener('focusin', event => {
+    const projectInput = event.target.closest('[data-project-input]');
+    if (!projectInput) return;
+    projectInput.closest('[data-project-composer]').classList.add('expanded');
+    caption.textContent = `在“${projectInput.dataset.projectName}”中创建新聊天；会自动继承项目上下文。`;
+  });
+  phone.addEventListener('focusout', event => {
+    const projectInput = event.target.closest('[data-project-input]');
+    if (!projectInput || projectInput.value.trim()) return;
+    setTimeout(() => projectInput.closest('[data-project-composer]')?.classList.remove('expanded'), 120);
+  });
+  phone.addEventListener('keydown', event => {
+    const projectInput = event.target.closest('[data-project-input]');
+    if (!projectInput || event.key !== 'Enter' || event.shiftKey) return;
+    event.preventDefault();
+    projectInput.closest('[data-project-composer]').querySelector('[data-project-send]').click();
+  });
+  phone.addEventListener('click', event => {
+    const failureTarget = event.target.closest('[data-show-failure]');
+    if (failureTarget) {
+      showOverlay(failureNotice);
+      caption.textContent = '错误详情按需显示，不占用正常聊天内容空间。';
+      return;
+    }
+    if (event.target.closest('[data-close-failure]')) { closeOverlays(); return; }
+    const projectSend = event.target.closest('[data-project-send]');
+    if (projectSend) {
+      const projectInput = projectSend.closest('[data-project-composer]').querySelector('[data-project-input]');
+      const prompt = projectInput.value.trim();
+      if (!prompt) {
+        showOverlay(attachSheet);
+        caption.textContent = '附件面板提供图片、拍照和文件入口。';
+        return;
+      }
+      const projectName = projectInput.dataset.projectName;
+      const originProject = currentPage;
+      setDemo('conversation', true);
+      armProjectReturn(originProject);
+      messagesView.querySelector('.user-message').textContent = prompt;
+      messagesView.querySelector('.assistant-message p').innerHTML = `这是在“<strong>${projectName}</strong>”项目中新建的对话。正式产品会继承该项目的模型、提示词和已授权上下文，并在这里流式生成回答。`;
+      caption.textContent = `已在“${projectName}”项目中新建并进入对话。`;
+      showToast(`已在“${projectName}”中新建对话`);
+      return;
+    }
+    const projectStrength = event.target.closest('[data-project-strength]');
+    if (projectStrength) { showOverlay(strengthSheet); return; }
+    const focusProject = event.target.closest('[data-focus-project]');
+    if (focusProject) {
+      const projectInput = appPageContent.querySelector('[data-project-input]');
+      projectInput?.focus();
+      projectInput?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      return;
+    }
+    const openTarget = event.target.closest('[data-open-page]');
+    if (openTarget) { renderPage(openTarget.dataset.openPage); return; }
+    const demoTarget = event.target.closest('[data-demo-link]');
+    if (demoTarget) {
+      closeOverlays();
+      const originProject = pages[currentPage]?.project ? currentPage : null;
+      setDemo(demoTarget.dataset.demoLink, Boolean(originProject));
+      if (originProject) armProjectReturn(originProject);
+      if (demoTarget.dataset.conversationTitle) caption.textContent = `已进入会话“${demoTarget.dataset.conversationTitle}”；会话设置位于右上角菜单。`;
+      return;
+    }
+    const actionTarget = event.target.closest('[data-prototype-action]');
+    if (actionTarget) { closeOverlays(); showToast(actionTarget.dataset.prototypeAction); return; }
+    const messageMenu = event.target.closest('[data-message-menu]');
+    if (messageMenu) { showOverlay(messageSheet); return; }
+    const toggle = event.target.closest('.toggle');
+    if (toggle) { const on = !toggle.classList.contains('on'); toggle.classList.toggle('on', on); toggle.setAttribute('aria-checked', String(on)); showToast(on ? '已启用' : '已停用'); return; }
+    const chip = event.target.closest('.chip');
+    if (chip) { const group = chip.parentElement; group.querySelectorAll('.chip').forEach(item => item.classList.toggle('selected', item === chip)); return; }
+    const tabButton = event.target.closest('.tabs button');
+    if (tabButton) { tabButton.parentElement.querySelectorAll('button').forEach(item => item.classList.toggle('active', item === tabButton)); showToast(`已切换到“${tabButton.textContent.trim()}”`); }
+  });
+  $$('.demo-bar button[data-demo]').forEach(button => button.addEventListener('click', () => setDemo(button.dataset.demo)));
+  $$('.demo-bar button[data-open-page]').forEach(button => button.addEventListener('click', () => renderPage(button.dataset.openPage)));
+  syncSendButton();
+</script>
+</body>
+</html>

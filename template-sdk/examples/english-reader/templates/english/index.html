@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>英语阅读与生词</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top"><div><small id="project">英语学习</small><h1>读懂每一句</h1></div><span class="mark">EN</span></header>
+  <nav class="tabs" aria-label="页面"><button data-page="reading" class="active">阅读</button><button data-page="vocab">生词本</button><button data-page="settings">目标</button></nav>
+  <main>
+    <section id="settings" class="page" hidden>
+      <h2>你的学习目标</h2><p class="hint">按目标推荐练习；本示例文章均为原创模拟内容，不是考试真题。</p>
+      <form id="profile-form" class="card form">
+        <label>目标<select id="goal"><option>通用英语</option><option>四级</option><option>六级</option><option>雅思</option><option>托福</option></select></label>
+        <label>当前水平<select id="level"><option value="B1">B1 · 基础阅读</option><option value="B2">B2 · 中级阅读</option><option value="C1">C1 · 高级阅读</option></select></label>
+        <label>每天阅读时间（分钟）<input id="minutes" type="number" min="5" max="120" value="20"></label>
+        <button class="primary" type="submit">保存目标并开始</button>
+      </form>
+    </section>
+    <section id="reading" class="page" hidden>
+      <div class="section-head"><div><h2>今日阅读</h2><p id="goal-summary" class="hint"></p></div></div>
+      <div id="reading-list" class="reading-list"></div>
+      <article id="article" class="card article" hidden>
+        <button id="back-to-list" class="text-button">← 返回文章列表</button>
+        <div class="eyebrow" id="article-source"></div><h2 id="article-title"></h2>
+        <p class="hint">点击单词查看词典与 AI 解读；点击句子末尾的朗读图标可听完整句子。</p>
+        <div id="paragraphs"></div>
+        <div class="practice"><strong>阅读理解 · 原创练习</strong><p id="question"></p><button id="show-answer" class="secondary">查看参考答案</button><p id="answer" hidden></p></div>
+      </article>
+      <section id="lookup" class="card lookup" hidden aria-live="polite">
+        <div class="section-head"><div><small>词语 / 句子</small><h3 id="lookup-term"></h3></div><button id="close-lookup" class="icon-button" aria-label="关闭">×</button></div>
+        <p id="wordnet" class="definition"></p><p id="wiktionary" class="hint"></p><p id="zh-wiktionary" class="hint"></p>
+        <div class="actions"><button id="speak-term" class="secondary">朗读</button><button id="ai-explain" class="secondary">AI 解读</button><button id="save-word" class="primary">加入生词本</button></div>
+        <div id="ai-result" class="ai-result" hidden></div>
+        <p class="attribution">离线英英释义：WordNet 3.0 © Princeton University；在线词义：Wiktionary，<a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>。词典释义不保证对应当前语境。<a id="source-en" href="https://en.wiktionary.org/">查看英英词条与贡献者</a> · <a id="source-zh" href="https://zh.wiktionary.org/">查看英汉词条与贡献者</a>。AI 解读单独展示。</p>
+      </section>
+    </section>
+    <section id="vocab" class="page" hidden>
+      <h2>生词本</h2><p class="hint">复习时间根据你点击的“记住了 / 再练习”更新；AI 不会静默改写掌握状态。</p>
+      <div id="review-box" class="card" hidden><h3>到期复习</h3><p id="review-word"></p><button id="reveal-meaning" class="secondary">显示释义</button><p id="review-meaning" hidden></p><div id="review-actions" class="actions" hidden><button id="review-again" class="secondary">再练习</button><button id="review-remember" class="primary">记住了</button></div></div>
+      <button id="generate-review" class="secondary">用 AI 出一道复习题</button><div id="review-ai" class="card" hidden></div>
+      <div id="vocab-list" class="vocab-list"></div>
+    </section>
+  </main>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

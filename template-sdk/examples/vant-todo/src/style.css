@@ -1,0 +1,38 @@
+:root {
+  font-family: system-ui, sans-serif;
+  background: var(--bg, #f4f4f2);
+  color: var(--fg, #161616);
+  --van-primary-color: var(--action, #171717);
+  --van-background: var(--bg, #f4f4f2);
+  --van-background-2: var(--card, #fff);
+  --van-text-color: var(--fg, #161616);
+  --van-text-color-2: var(--muted, #666662);
+  --van-cell-background: var(--card, #fff);
+  --van-field-input-text-color: var(--fg, #161616);
+  --van-button-primary-color: var(--onaction, #fff);
+  --van-button-primary-background: var(--action, #171717);
+  --van-button-primary-border-color: var(--action, #171717);
+  --van-checkbox-checked-icon-color: var(--action, #171717);
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg, #f4f4f2); }
+.page { min-height: 100dvh; padding: 24px 18px calc(28px + env(safe-area-inset-bottom)); }
+.heading { display: flex; gap: 16px; align-items: center; margin: 8px 0 28px; }
+.heading h1 { margin: 0; font-size: 25px; letter-spacing: -.03em; }
+.heading p { margin: 5px 0 0; color: var(--muted, #666662); font-size: 13px; }
+.symbol { width: 37px; height: 37px; border: 2px solid var(--muted, #666662); border-radius: 12px; transform: rotate(24deg); display: grid; place-items: center; }
+.symbol span { width: 21px; height: 21px; border: 2px solid var(--muted, #666662); border-radius: 8px; }
+.composer { display: flex; gap: 10px; align-items: center; padding: 8px; background: var(--card, #fff); border-radius: 18px; }
+.composer .van-cell { flex: 1; min-width: 0; background: transparent; padding: 9px; }
+.composer .van-button { flex: none; border-radius: 12px; }
+.section-label { display: flex; align-items: center; gap: 8px; margin: 30px 4px 10px; font-size: 14px; font-weight: 650; }
+.section-label .van-tag { color: var(--muted, #666662); background: transparent; border-color: var(--muted, #666662); }
+.list { display: grid; gap: 8px; }
+.task-cell { border-radius: 16px; align-items: center; }
+.task-cell .van-checkbox { min-width: 0; }
+.task-cell .van-checkbox__label { overflow-wrap: anywhere; }
+.task-cell .van-button { margin-left: 8px; border-radius: 9px; }
+.completed { text-decoration: line-through; color: var(--muted, #666662); }
+.feedback { margin: 18px 4px; color: var(--muted, #666662); font-size: 13px; }
+.progress { margin: 12px 4px; }
