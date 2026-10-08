@@ -47,6 +47,16 @@ MutCube 正处于积极开发阶段，当前应用版本为 **0.1.3**，包名�
 以训练记录模板为例，表单和日历负责高效操作，AI 负责整理资料与生成候选训练计划，宿主负责权限、结构校验、版本
 确认和持久化。项目聊天也可以在授权范围内发现并调用同一组模板能力。
 
+## 界面预览
+
+以下为 Android 真机实拍，展示空白首页、真实 AI 回复和内置健身模板；不是 HTML 原型。
+
+| 首页 | AI 对话 | 健身模板 |
+| --- | --- | --- |
+| <img src="docs/screenshots/01-home.png" width="240" alt="MutCube 空白首页"> | <img src="docs/screenshots/03-chat.png" width="240" alt="AI 回复与消息操作"> | <img src="docs/screenshots/07-fitness-intake.png" width="240" alt="健身模板资料录入入口"> |
+
+[查看全部 10 张截图及拍摄说明](docs/screenshots/README.md)。
+
 ## 主要功能
 
 ### 多模型 AI 聊天

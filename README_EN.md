@@ -53,6 +53,16 @@ In the built-in fitness template, for example, forms and calendars provide effic
 information and generates candidate plans, while the host enforces permissions, schemas, version confirmation, and
 persistence. Authorized project chats can discover and invoke the same template actions.
 
+## Screenshots
+
+Captured on a physical Android device: the empty home screen, a real AI response, and the built-in fitness template. These are not HTML mockups.
+
+| Home | AI chat | Fitness template |
+| --- | --- | --- |
+| <img src="docs/screenshots/01-home.png" width="240" alt="MutCube home screen"> | <img src="docs/screenshots/03-chat.png" width="240" alt="AI response and message actions"> | <img src="docs/screenshots/07-fitness-intake.png" width="240" alt="Fitness profile intake"> |
+
+[View all 10 screenshots and capture notes](docs/screenshots/README.md).
+
 ## Features
 
 ### Multi-provider AI chat
