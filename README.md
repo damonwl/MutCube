@@ -139,8 +139,7 @@ MutCube 正处于积极开发阶段，当前应用版本为 **0.1.3**，包名�
 
 ## 下载与构建
 
-当前仓库不提交 APK。对外安装包发布后应从仓库的 Release 页面获取；在没有正式 Release 时，请从源码自行构建，
-不要从不明来源下载带有 MutCube 名称的 APK。
+源码仓库不提交 APK。可安装的预发布版本请从 [GitHub Releases](https://github.com/damonwl/MutCube/releases) 下载，并查看 [v0.1.3 发布说明](docs/releases/v0.1.3.md) 和随包校验文件。也可从源码自行构建；不要从不明来源下载带有 MutCube 名称的 APK。
 
 构建环境：
 

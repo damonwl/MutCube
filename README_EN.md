@@ -162,8 +162,7 @@ The detailed backup boundary is documented in [Data backup and restore](docs/DAT
 
 ## Download and build
 
-APK files are not committed to this repository. Obtain public builds from the repository's Releases page when available.
-If no official Release exists, build from source and avoid APKs from untrusted sources using the MutCube name.
+APK files are not committed to the source repository. Download installable prereleases from [GitHub Releases](https://github.com/damonwl/MutCube/releases), read the [v0.1.3 release notes](docs/releases/v0.1.3.md), and verify the included checksums. You can also build from source. Avoid APKs from untrusted sources using the MutCube name.
 
 Requirements:
 
